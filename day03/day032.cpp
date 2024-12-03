@@ -16,31 +16,32 @@ int prod(string s){
     return a * b;
 }
 
-int process(string line){
+int process(string line, int &nmatches){
     int sumprod = 0;
     string s = line;
     // detecting three patterns mul() do() don't()
     regex r("mul\\([0-9]+,[0-9]+\\)|do\\(\\)|don't\\(\\)");
     smatch m; 
-    bool active = true;
+    static bool active = true;
     while (regex_search(s, m, r)){
+        nmatches++;
         //reactivate with do()
         if(m[0] == "do()"){
             active = true;
-            //cout << "activated" << endl;
+            cout << m[0] << " activated" << endl;
         }
         //deactivate with don't()
         else if(m[0] == "don't()"){
             active = false;
-            //cout << "deactivated" << endl;
+            cout << m[0] << " deactivated" << endl;
         }
         // is a mult pattern, process if active
         else if(active){
             sumprod += prod(m[0]);
-            //cout << m[0] << " = " << prod(m[0]) << " processed" << endl;
+            cout << m[0] << " = " << prod(m[0]) << " processed, total: " << sumprod << endl;
         }
         else{
-            //cout << m[0] << " skipped" << endl;
+            cout << m[0] << " skipped" << endl;
         }
         s = m.suffix().str();
     }
@@ -50,13 +51,14 @@ int process(string line){
 int main() {
     ifstream file("input.txt");
     string line;
-    int sum = 0, prod, id = 0;
+    int sum = 0, prod, id = 0, total = 0;
     while(getline(file, line)){
-        prod = process(line);
+        prod = process(line, total);
         cout << ++id << ": " << prod << endl;
         sum += prod;
     }
     cout << "total: " << sum << endl;
+    cout << "total matches: " << total << endl;
 
     return 0;
 }
