@@ -2,6 +2,7 @@
 advent of code day 2 (2)
 identify ascending/descending vectors 
 one bad level tolerated
+recursive version
 */
 
 #include <iostream>
@@ -26,8 +27,13 @@ bool is_secure(vector<int> &v, bool damped){
                 return false;
             else{
                 //remove item and check security again
-                v.erase(v.begin() + i);
-                return is_secure(v, true);
+                vector<int> v1(v);
+                vector<int> v2(v);
+                vector<int> v3(v);
+                if(i > 0) v1.erase(v1.begin() + i-1);
+                v2.erase(v2.begin() + i);
+                v3.erase(v3.begin() + i+1);
+                return (i>0 && is_secure(v1, true)) || is_secure(v2, true) || is_secure(v3, true);
             }
         }
     }
