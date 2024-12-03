@@ -16,15 +16,17 @@ int prod(string s){
     return a * b;
 }
 
-int process(string line, int &nmatches){
+int process(string line){
     int sumprod = 0;
     string s = line;
     // detecting three patterns mul() do() don't()
     regex r("mul\\([0-9]+,[0-9]+\\)|do\\(\\)|don't\\(\\)");
     smatch m; 
+    // actually it is a unique line
+    // make it static to keep state between calls
+    // just in case a line ends deactivated
     static bool active = true;
     while (regex_search(s, m, r)){
-        nmatches++;
         //reactivate with do()
         if(m[0] == "do()"){
             active = true;
@@ -38,7 +40,7 @@ int process(string line, int &nmatches){
         // is a mult pattern, process if active
         else if(active){
             sumprod += prod(m[0]);
-            cout << m[0] << " = " << prod(m[0]) << " processed, total: " << sumprod << endl;
+            cout << m[0] << " = " << prod(m[0]) << " processed " << endl;
         }
         else{
             cout << m[0] << " skipped" << endl;
@@ -51,14 +53,12 @@ int process(string line, int &nmatches){
 int main() {
     ifstream file("input.txt");
     string line;
-    int sum = 0, prod, id = 0, total = 0;
+    int sum = 0, prod, id = 0;
     while(getline(file, line)){
-        prod = process(line, total);
+        prod = process(line);
         cout << ++id << ": " << prod << endl;
         sum += prod;
     }
     cout << "total: " << sum << endl;
-    cout << "total matches: " << total << endl;
-
     return 0;
 }
