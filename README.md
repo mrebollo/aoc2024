@@ -6,3 +6,4 @@ C/C++ implementation according to the contents of programming subjects of the De
 Day 1. Read and sum two vectors from a file
 Day 2. Cheking order conditions in a vector
 Day 3. Regular expressions to extract patterns
+Day 4. Find substring in matrix
