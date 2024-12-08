@@ -1,3 +1,10 @@
+/*
+advent of code day 6 (1)
+calculate the number of cells visited by a robot
+before it moves away from the grid
+*/
+
+
 #include <iostream>
 #include <fstream>
 #include <string>
