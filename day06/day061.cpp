@@ -24,8 +24,8 @@ vector<string> load(string filename){
 
 //finds the initial position marked with ^
 void findStart(vector<string> map, int&x, int &y){
-	for( x = 0; x< map.size(); x++){
-		if(y = map[i].find("^") != npos)
+	for( x = 0; x< map.size(); x++)
+		if((y = map[x].find("^")) != string::npos)
 			return;
 }
 
@@ -35,30 +35,33 @@ inline void turn(int &head){
 }
 
 //check if (r,c) coordinates are inside the map
-inline bool inside(vector<string> map, int r, int c){
-	return r >=0 && r < map.size() && c >= 0 && c >= map.size();
+inline int inside(vector<string> &map, int r, int c){
+	return r >=0 && r < map.size() && c >= 0 && c < map.size();
 }
 
 // returns the element in the next cell ahead, '.' if in border
-char ahead(vector<string> map, int &r, int &c, int &h){
-	return inside(map, r, c) ? map[r+dr[h], c+dc[h]] : '.';
+char ahead(vector<string> &map, int r, int c, int h){
+	if(inside(map, r+dr[h], c+dc[h]))
+		return map[r+dr[h]][c+dc[h]];
+	return '.';
+	//return inside(map, r, c) ? map[r+dr[h], c+dc[h]] : '.';
 }
 
 // coordinates of the next cell following the heading
-void next(int &r, int &c, int &h){
+inline void next(int &r, int &c, int h){
 	r += dr[h];
 	c += dc[h];
 }
 
 //moves through the map until it moves away 
 // using final recursion scheme
-void move(vector<string> map, int &r, int &c, int &h, int &steps){
+void move(vector<string> &map, int r, int c, int h, int &steps){
 	//it moves away, terminates
 	if(!inside(map, r, c))
 		return;
 	//mark and count visited
 	if(map[r][c] != 'x'){
-		map[r][c]. = 'x';
+		map[r][c] = 'x';
 		steps++;
 	}
 	//turn when collision
@@ -69,12 +72,19 @@ void move(vector<string> map, int &r, int &c, int &h, int &steps){
 	move(map, r, c, h, steps);
 }
 
+void print(vector<string> &map){
+	for(int i = 0; i < map.size(); i++)
+		cout << map[i] << endl;
+}
+
+
 int main(){
 	vector<string> map;
 	int x, y, cells = 0, head = UP;
-	map = load("test.txt");
+	map = load("input.txt");
 	findStart(map, x, y);
 	move(map, x, y, head, cells);
+	print(map);
 	cout << "cells: " << cells << endl;
 
 }
