@@ -1,8 +1,10 @@
 /*
-advent of code day 7 (1)
+advent of code day 7 (2)
 calculate the result of an operation
-trying all posibble combinations of (+) and (*)
+trying all posibble combinations of (+) (*) and (||)
+where || concatenates the numbers
 */
+
 
 #include <iostream>
 #include <fstream>
@@ -13,20 +15,23 @@ trying all posibble combinations of (+) and (*)
 using namespace std;
 
 // create a binary tree-like path
-// with all posible combination of op: (+) left, (*) right
-bool eval(vector<int> v, int idx, long long res, long long total){
+// with all posible combination of op: (+) (*) (||)
+// where || concatenates the numbers
+bool eval(vector<string> v, int idx, long long res, long long total){
 	if(idx==v.size()){
 		return res == total;
 	}
-	return eval(v, idx+1, res+v[idx], total ) || 
-		   eval(v, idx+1, res*v[idx], total );
+	return eval(v, idx+1, res+stoi(v[idx]), total ) || 
+		   eval(v, idx+1, res*stoi(v[idx]), total ) ||
+		   eval(v, idx+1, stoll(to_string(res)+v[idx]), total) ||
+		   eval(v, idx+1, stoll(to_string(res)+v[idx]), total);
 }
 
 
 int main(){
-    fstream inputf("test.txt");
+    fstream inputf("input.txt");
     string line, data;
-	vector<int> values;
+	vector<string> values;
 	//values can exceed int limits
 	long long result, sum = 0;
      while(getline(inputf, line)){
@@ -36,7 +41,7 @@ int main(){
 		result = stoll(data);
 		//get the values
 		while(ss >> data)
-			values.push_back(stoi(data));
+			values.push_back(data);
 		//check if the result is possible
         if(eval(values, 0, 0, result)){
 				sum += result;
