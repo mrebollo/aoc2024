@@ -77,9 +77,6 @@ int main(){
 
     //get checksum
     long long chk = checksum(disk, newsize);
-
     cout << "Checksum: " << chk << endl;
-
-
     return 0;
 }
