@@ -16,20 +16,21 @@ void print(vector<int> &);
 
 // expand the condensed disk map to a full disk map
 // 12345 -> 0..111....22222 [<item><void>]*
-void expand(vector<int> &diskmap, vector<int> &disk){
+void expand(string diskmap, vector<int> &disk){
     int id = 0, i;
     for(i = 0; i < diskmap.size()-1; ){
-        disk.insert(disk.end(), diskmap[i++], id++);
-        disk.insert(disk.end(), diskmap[i++], -1);
+        disk.insert(disk.end(), diskmap[i++]-'0', id++);
+        disk.insert(disk.end(), diskmap[i++]-'0', -1);
     }
-    disk.insert(disk.end(), diskmap[i], id);
+    disk.insert(disk.end(), diskmap[i]-'0', id);
 }
 
 // find space to reallocate a block (-1 if none)
 // return the index in uncompressed disk 
-int find_space(vector<int> &diskmap, int block_size){
+int find_space(vector<int> &diskmap, int block){
+    int block_size = diskmap[block];
     // odd blocks are items, even blocks are holes 
-    for(int hole = 1; hole < diskmap.size(); hole += 2)
+    for(int hole = 1; hole < block; hole += 2)
         if(diskmap[hole] >= block_size)
             return hole;
     return -1;
@@ -71,7 +72,7 @@ void defragment(vector<int> &disk, vector<int> &diskmap){
     // blocks are in odd positions
     for(int block = diskmap.size() - 1; block > 0; block -= 2){
         //find a hole big enough for block
-        int hole = find_space(diskmap, diskmap[block]);
+        int hole = find_space(diskmap, block);
         if(hole > 0){
             // calculate hole position and get the pointer           
             hole_ptr = &disk[hole_position(disk, blksize, hole)];
@@ -108,24 +109,24 @@ void print(vector<int> &disk){
 
 int main(){
     vector<int> diskmap;
-    char ch;
+    string map;
     //load the disk map from file
     fstream inputf("input.txt");
-    // to avoid read last char twice
-    inputf.get(ch);
-    while(!inputf.eof()){
-        diskmap.push_back(ch - '0');
-        inputf.get(ch);
-    }
+    getline(inputf, map);
     inputf.close();
 
     //expand format
     vector<int> disk;
-    expand(diskmap, disk);
+    expand(map, disk);
     print(disk);
 
     //degfragment disk
+    for(char ch : map)
+        diskmap.push_back(ch-'0');
     defragment(disk, diskmap);
+    cout << "-------------------" << endl;
+    cout << "Defragmented disk:" << endl;
+    cout << "-------------------" << endl;
     print(disk);
 
     //get checksum
