@@ -32,7 +32,8 @@ void load(string filename){
     int i = 0;
     do{
         for(int j = 0; j < line.size(); j++)
-            map[i][j] = line[j] - '0';
+            //just for tests
+            map[i][j] = line[j] == '.' ? -9 : line[j] - '0';
         i++;
     }while(getline(inputf, line));
     inputf.close();
@@ -42,18 +43,33 @@ void load(string filename){
 void print(vector<vector<int> > &map){
     for(int i = 0; i < map.size(); i++){
         for(int j = 0; j < map[i].size(); j++)
-            cout << (map[i][j] > 0 ? map[i][j] : 0);
+            if(map[i][j] == -1)
+                cout << "x";
+            else if(map[i][j] == -9)
+                cout << "."; 
+            else
+                cout << to_string(map[i][j]);
         cout << endl;
     } 
 }   
+
+//unmark the cells with a 9 that ended up being visited
+void restore(){
+    for(int i = 0; i < map.size(); i++)
+        for(int j = 0; j < map[i].size(); j++)
+            if(map[i][j] == -1)
+                map[i][j] = 9;
+}
 
 
 //recursive function to find all possible paths from a starting point
 int trailhead_from(int i, int j){
     //base case: if the point is 9, return 1
     if(map[i][j] == 9){
-        print(map);
-        cout << endl;
+        //print(map);
+        //cout << endl;
+        //mark the point as visited (avoid alternative path to the same )
+        map[i][j] = -1;
         return 1;
     }
     //mark the point as visited
@@ -79,13 +95,19 @@ int hicking(){
     //find all the starting points (0)
     for(int i = 0; i < map.size(); i++)
         for(int j = 0; j < map.size(); j++)
-            if(map[i][j] == 0)
-                total += trailhead_from(i,j);
+            if(map[i][j] == 0){
+                 cout << "Starting point: (" << i << ", " << j << ")" << endl;
+                int paths = trailhead_from(i,j);
+                cout << "trailheads found: " << paths << endl;
+                total += paths;
+                //unmark the sucessful paths
+                restore();
+            }
     return total;
 }
 
 int main(){
-    load("test74.txt");
+    load("input.txt");
     print(map);
     int total = hicking();
     cout << "Total: " << total << endl;
