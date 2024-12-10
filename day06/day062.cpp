@@ -1,6 +1,6 @@
 /*
 advent of code day 6 (1)
-calculate the possible positions for ann obstacle
+calculate the possible positions for an obstacle
 that forces the robot to get stuck on a loop
 */
 
@@ -16,13 +16,6 @@ struct pos{
 	int x, y, h;
 };
 
-// saves the heading in each cell
-// it's a loop if cell visited with the same heading
-vector<vector<int> > memdir;
-
-bool in_loop(vector<string> &map, int r, int c, int h){
-	return map[r][c] == 'x' && memdir[r][c] == h;
-}
 
 //up, right, down, left
 enum dir {UP, RG, DW, LF}; 
@@ -75,6 +68,14 @@ inline void next(int &r, int &c, int h){
 	c += dc[h];
 }
 
+
+bool in_loop(vector<pos> &path, int r, int c, int h){
+	for(pos p : path)
+		if(p.x == r && p.y == c && p.h == h)
+			return true;
+	return false;
+}
+
 //moves through the map until it moves away 
 // using final recursion scheme
 void move(vector<string> &map, int r, int c, int h, int &steps, vector<pos> &path){
@@ -83,13 +84,10 @@ void move(vector<string> &map, int r, int c, int h, int &steps, vector<pos> &pat
 		return;
 	//mark and count visited
 	if(map[r][c] != '#'){
-		// saves heading to detect loops
-		memdir[r][c] = h;
 		//saves visited in the path
-		if(map[r][c] != 'x'){
-			pos p = {r,c};
-			path.push_back(p);
-		}
+		pos p = {r,c, h};
+		path.push_back(p);
+		//mark de cell as visited
 		map[r][c] = 'x';
 		steps++;
 	}
@@ -108,31 +106,33 @@ void print(vector<string> &map){
 
 
 //the path from current position generates a loop
-bool is_loop(vector<string> &map, int r, int c, int h){
+bool is_loop(vector<string> &map, vector<pos> &path, int r, int c, int h){
 	if(!inside(map, r, c))
 		return false;
-	if(in_loop(map, r, c, h))
+	if(in_loop(path, r, c, h))
 		return true;
 	//turn when collision
 	if(ahead(map, r, c, h) == '#')
 		turn(h);
 	//moves to the next cell following the current direction
 	next(r, c, h);
-	return is_loop(map, r, c, h);
+	return is_loop(map, path, r, c, h);
 }
 
 //check if obstacle in candidate position generates loop
-bool create_loop(vector<string> &map, pos obs, pos start){
+bool create_loop(vector<string> &map, vector<pos> &path, int obsid, int startid){
 	bool res = false;
+	pos obs = path[obsid];
+	pos start = path[startid];
 	//puts an obstacle in obs
 	map[obs.x][obs.y] = '#';
 	//begins at previous position
-	int r = start.x, c = start.y, h = memdir[r][c];
+	int r = start.x, c = start.y, h = start.h;
 	//forces hit new obstacle (turn)
 	turn(h); 
 	next(r, c, h);
 	//moves until it moves away or loop detected
-	if(is_loop(map, r, c, h))
+	if(is_loop(map, path, r, c, h))
 		res = true;
 	//restores the map
 	map[obs.x][obs.y] = 'x';
@@ -149,7 +149,7 @@ int add_obstacles(vector<string> &map, vector<pos> &path){
 		//puts an obstacle in position i, robot in i-1
 		//and checks if it generates a loop
 		//(not needed cover path from initial position)
-		if(create_loop(map, path[i], path[i-1]))
+		if(create_loop(map, path, i, i-1))
 			obstacles++;
 	return obstacles;
 }
@@ -160,7 +160,6 @@ int main(){
 	vector<pos> path;
 	int x, y, cells = 0, head = UP;
 	map = load("test.txt");
-	memdir.resize(map.size(), vector<int>(map.size(), -1));
 	findStart(map, x, y);
 	move(map, x, y, head, cells, path);
 	print(map);
