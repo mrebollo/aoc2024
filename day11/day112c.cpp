@@ -4,8 +4,7 @@ expand an array of integers
 0 -> 1
 even digits -> split in two
 other -> multiply by 2024
-Adapt to large iterations (75) using final recursion
-
+Dynamic programming: include memoization in recursive function
 */
 
 
@@ -17,10 +16,15 @@ Adapt to large iterations (75) using final recursion
 #include <chrono>
 
 
-#define NITER 50
+#define NITER 75
 
 using namespace std;
 using namespace chrono;
+// memoization vector
+//memo[i] -> number of stones after blinking i
+vector<vector<int> > memo(1000000, vector<int>(NITER, 0));  
+int memouse = 0;
+int totalcalls = 0;
 
 
 // load the initial vector
@@ -57,49 +61,66 @@ inline bool is_even(int n){
 }
 
 // blink and apply rules
-void blink(int st, int iter, int &nstones){
+long long blink(long long st, int iter){
+    totalcalls++;
+    // memoization
+    // check if the vector is big enough
+    if(st < memo.size() && memo[st][iter] != 0){
+        memouse++;
+        return memo[st][iter];
+    }
     // base case
-    if(iter == NITER)
-        return;
+    if(iter == NITER){
+        //cout << st << " ";
+        if( st < memo.size())
+            memo[st][iter] = 1;
+        return 1;
+    }
     // applying rules
+    long long res;    
     if(st == 0)
-        blink(1, iter+1, nstones);
+        res =  blink(1, iter+1);
     else {
         int digits = num_digits(st);
         int half = pow(10,digits/2);
         if(digits > 0 && is_even(digits)){
-            nstones++;
-            blink(st/half, iter+1, nstones);
-            blink(st%half, iter+1, nstones);
+            res =  blink(st/half, iter+1) + blink(st%half, iter+1);
         }
         else
-            blink(st*2024, iter+1, nstones);
+            res = blink(st*2024, iter+1);
     }
+    // memoization
+    if(st < memo.size())
+        memo[st][iter] = res;
+    return res;
 }
 
 
 // blink one item
-int blink_item(int stone){
-    int nstones = 1;
-    blink(stone, 0, nstones);
+long long blink_item(long long stone){
+    long long nstones = blink(stone, 0);
     return nstones;
 }
 
 
 int main(){
     vector<long long> stones;
-    stones = load("test.txt");
+    stones = load("input.txt");
     print(stones);
 
     //expand the array item to item
-    int nstones = 0;
+    long long nstones = 0;
     auto start = high_resolution_clock::now();
-    for(int st : stones){
+    for(long long st : stones){
         cout << "blinking " << st << endl;
         nstones += blink_item(st);
+        cout << endl;
     }
     auto stop = high_resolution_clock::now();
     cout << "final stones: " << nstones << endl;
+    cout << "Total calls: " << totalcalls << endl;
+    cout << "Memoization used: " << memouse << endl;
+    cout << "proportion " << (double)memouse/totalcalls << endl;
     cout << "Time taken: " << duration_cast<seconds>(stop - start).count() << " s" << endl;
     return 0;
 }
