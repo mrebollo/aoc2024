@@ -18,7 +18,7 @@ Adapt to large iterations (75) using final recursion
 
 
 //#define NITER 20
-int NITER = 10;
+int NITER = 65;
 
 using namespace std;
 using namespace chrono;
@@ -59,7 +59,7 @@ inline bool is_even(int n){
 }
 
 // blink and apply rules
-void blink(long long st, int iter, long long &nstones){
+void blink(long long st, int iter, double &nstones){
     totalcalls++;
     // base case
     if(iter == NITER){
@@ -84,9 +84,10 @@ void blink(long long st, int iter, long long &nstones){
 
 
 // blink one item
-long long blink_item(long long stone){
-    long long nstones = 1;
+double blink_item(long long stone){
+    double nstones = 1;
     blink(stone, 0, nstones);
+    cout << "st: " << nstones << endl;
     return nstones;
 }
 
@@ -98,7 +99,8 @@ int main(int argc, char **argv){
 
     //expand the array item to item
     long long nstones = 0;
-    NITER = stoi(argv[1]);
+    if(argc > 1)
+        NITER = stoi(argv[1]);
     auto start = high_resolution_clock::now();
     for(long long st : stones){
         cout << "blinking " << st << endl;

@@ -16,14 +16,15 @@ Dynamic programming: include memoization in recursive function
 #include <chrono>
 
 
-//#define NITER 20
+//global variable to allow change from the command line
 int NITER = 75;
 
 using namespace std;
 using namespace chrono;
-// memoization vector
-//memo[i] -> number of stones after blinking i
-vector<vector<int> > memo(1000000);  
+// memoization vector 
+//memo[i][it] -> number of stones after blinking i for it iterations
+vector<vector<long long> > memo(1000000);  
+// stats to determine PD efficiency
 int memouse = 0;
 int totalcalls = 0;
 
@@ -68,12 +69,10 @@ long long blink(long long st, int iter){
     // check if the vector is big enough
     if(st < memo.size() && memo[st][iter] != 0){
         memouse++;
-        //cout << st << "[" << iter << "] -> " << memo[st][iter] << endl;
         return memo[st][iter];
     }
     // base case
     if(iter == NITER){
-        //cout << st << " ";
         if( st < memo.size())
             memo[st][iter] = 1;
         return 1;
@@ -81,27 +80,19 @@ long long blink(long long st, int iter){
     // applying rules
     long long res;    
     if(st == 0)
-        res =  blink(1, iter+1);
+        res = blink(1, iter+1);
     else {
         int digits = num_digits(st);
         int half = pow(10,digits/2);
         if(digits > 0 && is_even(digits)){
-            res =  blink(st/half, iter+1) + blink(st%half, iter+1);
+            res = blink(st/half, iter+1) + blink(st%half, iter+1);
         }
         else
             res = blink(st*2024, iter+1);
     }
-    // memoization
     if(st < memo.size())
         memo[st][iter] = res;
     return res;
-}
-
-
-// blink one item
-long long blink_item(long long stone){
-    long long nstones = blink(stone, 0);
-    return nstones;
 }
 
 
@@ -110,24 +101,25 @@ int main(int argc, char **argv){
     stones = load("input.txt");
     print(stones);
 
-    //expand the array item to item
-    long long nstones = 0;
+    //resize the memoization vector according to number of iterations
     if(argc > 1)
         NITER = stoi(argv[1]);
     for(auto &m : memo)
-        m = vector<int>(NITER+1, 0);
+        m = vector<long long>(NITER+1, 0);
+
+    //expand the array item to item
+    long long nstones = 0;
     auto start = high_resolution_clock::now();
     for(long long st : stones){
         cout << "blinking " << st << endl;
-        nstones += blink_item(st);
-        //cout << endl;
+        nstones += blink(st, 0);
     }
     auto stop = high_resolution_clock::now();
-    cout << "final stones: " << nstones << endl;
+    cout << "Final stones: " << nstones << endl;
     cout << "Total calls: " << totalcalls << endl;
     cout << "Memoization used: " << memouse << endl;
-    cout << "proportion " << (double)memouse/totalcalls << endl;
-    cout << "Time taken: " << duration_cast<milliseconds>(stop - start).count() << " ml" << endl;
+    cout << "Proportion " << (double)memouse/totalcalls << endl;
+    cout << "Exec time: " << duration_cast<milliseconds>(stop - start).count() << " ml" << endl;
     return 0;
 }
 
