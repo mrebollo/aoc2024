@@ -1,5 +1,5 @@
 /*
-advent of code day 6 (1)
+advent of code day 6 (2)
 calculate the possible positions for an obstacle
 that forces the robot to get stuck on a loop
 */
@@ -129,8 +129,10 @@ bool create_loop(vector<string> &map, vector<pos> &path, int obsid){
 	//begins at previous position
 	int r = start.x, c = start.y, h = start.h;
 	//moves until it moves away or loop detected
-	if(is_loop(map, path, start, obs))
+	if(is_loop(map, path, start, obs)){
+		print(map);
 		res = true;
+	}
 	//restores the map
 	map[obs.x][obs.y] = 'x';
 	return res;
