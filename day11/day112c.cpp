@@ -16,13 +16,14 @@ Dynamic programming: include memoization in recursive function
 #include <chrono>
 
 
-#define NITER 75
+//#define NITER 20
+int NITER = 75;
 
 using namespace std;
 using namespace chrono;
 // memoization vector
 //memo[i] -> number of stones after blinking i
-vector<vector<int> > memo(1000000, vector<int>(NITER, 0));  
+vector<vector<int> > memo(1000000);  
 int memouse = 0;
 int totalcalls = 0;
 
@@ -67,6 +68,7 @@ long long blink(long long st, int iter){
     // check if the vector is big enough
     if(st < memo.size() && memo[st][iter] != 0){
         memouse++;
+        //cout << st << "[" << iter << "] -> " << memo[st][iter] << endl;
         return memo[st][iter];
     }
     // base case
@@ -103,25 +105,29 @@ long long blink_item(long long stone){
 }
 
 
-int main(){
+int main(int argc, char **argv){
     vector<long long> stones;
     stones = load("input.txt");
     print(stones);
 
     //expand the array item to item
     long long nstones = 0;
+    if(argc > 1)
+        NITER = stoi(argv[1]);
+    for(auto &m : memo)
+        m = vector<int>(NITER+1, 0);
     auto start = high_resolution_clock::now();
     for(long long st : stones){
         cout << "blinking " << st << endl;
         nstones += blink_item(st);
-        cout << endl;
+        //cout << endl;
     }
     auto stop = high_resolution_clock::now();
     cout << "final stones: " << nstones << endl;
     cout << "Total calls: " << totalcalls << endl;
     cout << "Memoization used: " << memouse << endl;
     cout << "proportion " << (double)memouse/totalcalls << endl;
-    cout << "Time taken: " << duration_cast<seconds>(stop - start).count() << " s" << endl;
+    cout << "Time taken: " << duration_cast<milliseconds>(stop - start).count() << " ml" << endl;
     return 0;
 }
 

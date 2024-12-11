@@ -17,11 +17,13 @@ Adapt to large iterations (75) using final recursion
 #include <chrono>
 
 
-#define NITER 50
+//#define NITER 20
+int NITER = 10;
 
 using namespace std;
 using namespace chrono;
 
+int totalcalls = 0;
 
 // load the initial vector
 vector<long long> load(string filename){
@@ -57,10 +59,13 @@ inline bool is_even(int n){
 }
 
 // blink and apply rules
-void blink(int st, int iter, int &nstones){
+void blink(long long st, int iter, long long &nstones){
+    totalcalls++;
     // base case
-    if(iter == NITER)
+    if(iter == NITER){
+        //cout << st << " ";
         return;
+    }
     // applying rules
     if(st == 0)
         blink(1, iter+1, nstones);
@@ -79,28 +84,31 @@ void blink(int st, int iter, int &nstones){
 
 
 // blink one item
-int blink_item(int stone){
-    int nstones = 1;
+long long blink_item(long long stone){
+    long long nstones = 1;
     blink(stone, 0, nstones);
     return nstones;
 }
 
 
-int main(){
+int main(int argc, char **argv){
     vector<long long> stones;
-    stones = load("test.txt");
+    stones = load("input.txt");
     print(stones);
 
     //expand the array item to item
-    int nstones = 0;
+    long long nstones = 0;
+    NITER = stoi(argv[1]);
     auto start = high_resolution_clock::now();
-    for(int st : stones){
+    for(long long st : stones){
         cout << "blinking " << st << endl;
         nstones += blink_item(st);
+        //cout << endl;
     }
     auto stop = high_resolution_clock::now();
     cout << "final stones: " << nstones << endl;
     cout << "Time taken: " << duration_cast<seconds>(stop - start).count() << " s" << endl;
+    cout << "Total calls: " << totalcalls << endl;
     return 0;
 }
 
