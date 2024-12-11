@@ -1,9 +1,10 @@
 /*
-advent of code day 11 (1)
+advent of code day 11 (2)
 expand an array of integers
 0 -> 1
 even digits -> split in two
 other -> multiply by 2024
+Adapt to large iterations (75)
 */
 
 
@@ -12,6 +13,8 @@ other -> multiply by 2024
 #include <string>
 #include <sstream>
 #include <vector>
+
+#define NITER 75
 
 
 using namespace std;
@@ -66,21 +69,31 @@ vector<long long> blink(vector<long long> &stones){
                 newstones.push_back(stones[i]*2024);
         }
     }
-    //print(newstones);
     return newstones;
 }
+
+
+// blink one item
+int blink_item(int stone){
+    vector<long long> stones(1,stone);
+    for(int i = 0; i < NITER; i++)
+        stones = blink(stones);
+    return stones.size();
+}
+
 
 int main(){
     vector<long long> stones;
     stones = load("input.txt");
     print(stones);
 
-    //expand the array
-    for(int i = 0; i < 75; i++){
-        stones = blink(stones);
+    //expand the array item to item
+    int nstones = 0;
+    for(int st : stones){
+        cout << "blinking " << st << endl;
+        nstones += blink_item(st);
     }
-    cout << "final stones: " << stones.size() << endl;
-
+    cout << "final stones: " << nstones << endl;
     return 0;
 }
 
