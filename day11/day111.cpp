@@ -40,7 +40,8 @@ void print(vector<long long> &v){
 
 // number of digits in a number
 inline int num_digits(long long n){
-    return ceil(log10(n));
+    //trick: add 0.1 to force 100 -> 3 digits
+    return ceil(log10(n+0.1));
 }
 
 // check if a number is even
@@ -71,16 +72,12 @@ vector<long long> blink(vector<long long> &stones){
 
 int main(){
     vector<long long> stones;
-    stones = load("test.txt");
+    stones = load("input.txt");
     print(stones);
 
     //expand the array
     for(int i = 0; i < 25; i++){
         stones = blink(stones);
-        if (i < 10)
-            print(stones);
-        cout << "num stones: " << stones.size() << endl;
-
     }
     cout << "final stones: " << stones.size() << endl;
 
