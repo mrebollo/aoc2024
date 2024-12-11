@@ -12,9 +12,13 @@ other -> multiply by 2024
 #include <string>
 #include <sstream>
 #include <vector>
+#include <chrono>
+
 
 
 using namespace std;
+using namespace chrono;
+
 
 // load the initial vector
 vector<long long> load(string filename){
@@ -72,14 +76,17 @@ vector<long long> blink(vector<long long> &stones){
 
 int main(){
     vector<long long> stones;
-    stones = load("input.txt");
+    stones = load("test.txt");
     print(stones);
 
     //expand the array
-    for(int i = 0; i < 75; i++){
+    auto start = high_resolution_clock::now();
+    for(int i = 0; i < 25; i++){
         stones = blink(stones);
     }
+    auto stop = high_resolution_clock::now();
     cout << "final stones: " << stones.size() << endl;
+    cout << "Time taken: " << chrono::duration_cast<milliseconds>(stop - start).count() << " ms" << endl;
 
     return 0;
 }

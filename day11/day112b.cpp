@@ -4,7 +4,8 @@ expand an array of integers
 0 -> 1
 even digits -> split in two
 other -> multiply by 2024
-Adapt to large iterations (75) expanding one stone at a time
+Adapt to large iterations (75) using final recursion
+
 */
 
 
@@ -16,8 +17,8 @@ Adapt to large iterations (75) expanding one stone at a time
 #include <chrono>
 
 
-#define NITER 25
-
+#define NITER 50
+int nit = 0;
 
 using namespace std;
 using namespace chrono;
@@ -57,50 +58,53 @@ inline bool is_even(int n){
 }
 
 // blink and apply rules
-vector<long long> blink(vector<long long> &stones){
-    vector<long long> newstones;
-    for(int i = 0; i < stones.size(); i++){
-        if(stones[i] == 0)
-            newstones.push_back(1);
-        else {
-            int digits = num_digits(stones[i]);
-            int half = pow(10,digits/2);
-            if(digits > 0 && is_even(digits)){
-                newstones.push_back(stones[i] / half);
-                newstones.push_back(stones[i] % half);
-            }
-            else
-                newstones.push_back(stones[i]*2024);
+void blink(int st, int iter, int &nstones){
+    // base case
+    if(iter == nit)
+        return;
+    // applying rules
+    if(st == 0)
+        blink(1, iter+1, nstones);
+    else {
+        int digits = num_digits(st);
+        int half = pow(10,digits/2);
+        if(digits > 0 && is_even(digits)){
+            nstones++;
+            blink(st/half, iter+1, nstones);
+            blink(st%half, iter+1, nstones);
         }
+        else
+            blink(st*2024, iter+1, nstones);
     }
-    return newstones;
 }
 
 
 // blink one item
 int blink_item(int stone){
-    vector<long long> stones(1,stone);
-    for(int i = 0; i < NITER; i++)
-        stones = blink(stones);
-    return stones.size();
+    int nstones = 1;
+    blink(stone, 0, nstones);
+    return nstones;
 }
 
 
 int main(){
     vector<long long> stones;
-    stones = load("input.txt");
+    stones = load("test.txt");
     print(stones);
 
     //expand the array item to item
-    int nstones = 0;
+    for(nit = 5; nit <= NITER; nit++){
+        int nstones = 0;
         auto start = high_resolution_clock::now();
-    for(int st : stones){
-        //cout << "blinking " << st << endl;
-        nstones += blink_item(st);
+        for(int st : stones){
+            //cout << "blinking " << st << endl;
+            nstones += blink_item(st);
+        }
+        auto stop = high_resolution_clock::now();
+        cout << nit << ", " << duration_cast<milliseconds>(stop - start).count() << endl;
+        //cout << "final stones: " << nstones << endl;
+        //cout << "Time taken: " << duration_cast<seconds>(stop - start).count() << " s" << endl;
     }
-    auto stop = high_resolution_clock::now();
-    cout << "final stones: " << nstones << endl;
-        cout << "Time taken: " << duration_cast<milliseconds>(stop - start).count() << " ms" << endl;
-return 0;
+    return 0;
 }
 
