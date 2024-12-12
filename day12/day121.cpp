@@ -46,19 +46,26 @@ sizes Garden::plot_at(int i, int j){
         return s;
     garden[i][j] = '.';
     s.area = 1;
+    s.perimeter = 4;
+    for(int d = 0; d < 4; d++){
+        // get adjacent coordinates
+        int ni = i + dr[d];
+        int nj = j + dc[d];
+        if(is_inside(ni, nj) && garden[ni][nj] == c)
+            s.perimeter--;
+    }
+    // iterate over the 4 directions
     for(int d = 0; d < 4; d++){
         // get adjacent coordinates
         int ni = i + dr[d];
         int nj = j + dc[d];
         //check is inside the garden and if it is the same letter
-        if(is_inside(ni, nj))
-            // area = sum of adjacent with same character
-            if(garden[ni][nj] == c)
-                // area = sum of cells with same character
-                s.area += plot_at(ni, nj).area;
-            else
-                // perimeter = sum of adjacent with different character
-                s.perimeter++;
+        if(is_inside(ni, nj) && garden[ni][nj] == c){
+            // area = sum of cells with same character
+            sizes res = plot_at(ni, nj);
+            s.area += res.area;
+            s.perimeter += res.perimeter;
+        }
     }
     return s;
 }
@@ -100,15 +107,15 @@ void Garden::extract_plots(){
 // calculate the value
 int Garden::value(){
     int val = 0;
-    for(int i = 0; i < plot.size(); i++)
-        val += plot[i].area * plot[i].perimeter;
+    for(sizes s : plot)
+        val += s.area * s.perimeter;
     return val;
 }
 
 
 int main(){
     // load the garden
-    Garden g("test10.txt");
+    Garden g("test4.txt");
     g.print();
     // extract the plots (areas)
     g.extract_plots();
