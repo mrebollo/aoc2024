@@ -16,7 +16,13 @@ using namespace std;
 struct sizes{
     int area;
     int perimeter;
+    sizes operator +(const sizes &s){
+        return {area + s.area, perimeter + s.perimeter};
+    }
+    int value(){return area * perimeter;}
 };
+
+
 int dr[4] = {0,0,1,-1};
 int dc[4] = {1,-1,0,0};
 
@@ -40,20 +46,22 @@ class Garden{
 // calculate the area and perimeter of a plot
 sizes Garden::plot_at(int i, int j){
     sizes s = {0, 0};
-    // get the plot type and mark as visited
+    // get the plot type
     char c;
-    if( (c = garden[i][j]) == '.')
+    if( (c = garden[i][j]) == '-'){
         return s;
-    garden[i][j] = '.';
+    }
     s.area = 1;
     s.perimeter = 4;
     for(int d = 0; d < 4; d++){
         // get adjacent coordinates
         int ni = i + dr[d];
         int nj = j + dc[d];
-        if(is_inside(ni, nj) && garden[ni][nj] == c)
+        if(is_inside(ni, nj) && (garden[ni][nj] == c || garden[ni][nj] == '-'))
             s.perimeter--;
     }
+    // mark the cell as visited
+    garden[i][j] = '-';	
     // iterate over the 4 directions
     for(int d = 0; d < 4; d++){
         // get adjacent coordinates
@@ -62,11 +70,11 @@ sizes Garden::plot_at(int i, int j){
         //check is inside the garden and if it is the same letter
         if(is_inside(ni, nj) && garden[ni][nj] == c){
             // area = sum of cells with same character
-            sizes res = plot_at(ni, nj);
-            s.area += res.area;
-            s.perimeter += res.perimeter;
+            s = s + plot_at(ni, nj);
         }
     }
+    //mark cell as processed
+    garden[i][j] = '.';	
     return s;
 }
 
@@ -95,10 +103,11 @@ void Garden::extract_plots(){
         for(int j = 0; j < garden[i].size(); j++)
             // if it is a letter
             if(isalpha(garden[i][j])){
-                cout << garden[i][j] << " plot at " << i << ", " << j << endl;
+                char current = garden[i][j];
+                //cout << current << " plot at " << i << ", " << j << endl;
                 sizes s = plot_at(i, j);
-                print();
-                cout << "Area: " << s.area << " Perimeter: " << s.perimeter << endl << endl;
+                //print();
+                //cout << current << " Area: " << s.area << " Perimeter: " << s.perimeter << " -> " << s.value() << endl << endl;
                 plot.push_back(s);
             }
 }
@@ -108,15 +117,15 @@ void Garden::extract_plots(){
 int Garden::value(){
     int val = 0;
     for(sizes s : plot)
-        val += s.area * s.perimeter;
+        val += s.value();
     return val;
 }
 
 
 int main(){
     // load the garden
-    Garden g("test4.txt");
-    g.print();
+    Garden g("input.txt");
+    //g.print();
     // extract the plots (areas)
     g.extract_plots();
     // calculate value
