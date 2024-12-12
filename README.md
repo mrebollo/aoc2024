@@ -15,12 +15,14 @@ Day 5. Determine correct page order. Topological order in graphs
 
 Day 6. Follow a path in a matrix bounding with obstacles
 
-Day 7. Combinations os operations (DyV or tree-like)
+Day 7. Combinations os operations (D&C or tree-like)
 
-Day 8. POints over a rect (manhattan distances)
+Day 8. Points over a rect (manhattan distances)
 
 Day 9. Defragment disk: Reorder elements in vector
 
 Day 10. Gradient ascent paths
 
 Day 11. Expand array of digits. Dynamic programming approach
+
+Day 12. Identify blocks of consecutive letters in a grid (garden plots). Calculate area and perimeter
