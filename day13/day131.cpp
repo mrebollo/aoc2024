@@ -62,25 +62,22 @@ Claws::Claws(coor A, coor B, coor prize){
 
 // move the claw to the prize position
 int Claws::move_claw(vector<vector<int> > &M, coor pos, int iter){
-    /*
-    if(M[pos.x][pos.y] != -1){
-        return M[pos.x][pos.y];
-    }
-    */
     if(iter >= MAX_MOVES || pos < origin){
         return RAND_MAX; //infinite
     }
-    
+    if(M[pos.x][pos.y] != -1){
+        return M[pos.x][pos.y];
+    }    
     if(pos == origin){
-        return 0;
-        //M[0][0] = 0;;
+        M[0][0] = 0;
     }
-    
+    else{
     long pressA = move_claw(M, pos - A, iter + 1) + TKN_A;
     long pressB = move_claw(M, pos - B, iter + 1) + TKN_B;
-    //M[pos.x][pos.y] = min(pressA, pressB);
-    //return M[pos.x][pos.y];
-    return min(pressA, pressB);
+    M[pos.x][pos.y] = min(pressA, pressB);
+    }
+    return M[pos.x][pos.y];
+    //return min(pressA, pressB);
 }
 
 
@@ -108,7 +105,7 @@ void get_prize(coor A, coor B, coor prize){
 
 int main() {
     //load the input
-    fstream input("testshort.txt");
+    fstream input("test.txt");
     string line;
     char btn[20], name; 
     coor A, B, prize;
