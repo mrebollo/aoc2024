@@ -119,7 +119,7 @@ bool is_loop(vector<string> &map, vector<pos> &path, pos p, pos obs){
 	if(ahead(map, p.x, p.y, p.h) == 'O')
 		return true;
 	//detect loop using a bitmask with heading -> loop
-	//if(visited[p.x][p.y]) // & (1 << p.h))
+	//if(visited[p.x][p.y] & (1 << p.h))
 	//	return true;
 	if(ahead(map, p.x, p.y, p.h) == 'H'){
 		//hits the obstacle once
@@ -127,7 +127,7 @@ bool is_loop(vector<string> &map, vector<pos> &path, pos p, pos obs){
  		turn(p.h);
 	}
 	//mark as visited
-	visited[p.x][p.y] |= (1 << p.h);
+	//visited[p.x][p.y] |= (1 << p.h);
 	//turn when collision
 	if(ahead(map, p.x, p.y, p.h) == '#')
 		turn(p.h);
@@ -155,6 +155,7 @@ bool create_loop(vector<string> &map, vector<pos> &path, int obsid){
 	//restores the map
 	map[obs.x][obs.y] = 'x';
 	visited.clear();
+	cout << "obs: " << obsid << " " << res << endl;
 	return res;
 
 }
