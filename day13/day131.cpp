@@ -28,16 +28,14 @@ struct coor{
     bool operator ==(const coor &b){
         return x == b.x && y == b.y;
     }
-    bool operator > (const coor &b){
-        return x > b.x || y > b.y;
+    bool operator < (const coor &b){
+        return x < b.x || y < b.y;
     }
-    coor operator +(const coor  &b){
-        return {x + b.x, y + b.y};
-    }
-    coor& operator +=(const coor    &b){
-        x += b.x; y += b.y; return *this;
+    coor operator -(const coor  &b){
+        return {x - b.x, y - b.y};
     }
 };
+coor origin = {0, 0};
 
 
 class Claws{
@@ -47,7 +45,7 @@ private:
     long cost;
 public:
     Claws(coor A, coor B, coor prize);
-    int move_claw(coor pos, int inter);
+    int move_claw(vector<vector<int> > &M, coor pos, int inter);
     void show();
 };
 
@@ -63,17 +61,28 @@ Claws::Claws(coor A, coor B, coor prize){
 
 
 // move the claw to the prize position
-int Claws::move_claw(coor pos, int iter){
-    if(iter >= MAX_MOVES || pos > prize){
+int Claws::move_claw(vector<vector<int> > &M, coor pos, int iter){
+    /*
+    if(M[pos.x][pos.y] != -1){
+        return M[pos.x][pos.y];
+    }
+    */
+    if(iter >= MAX_MOVES || pos < origin){
         return RAND_MAX; //infinite
     }
-    if(pos == prize){
-        return 0 ;
+    
+    if(pos == origin){
+        return 0;
+        //M[0][0] = 0;;
     }
-    long pressA = move_claw(pos + A, iter + 1) + TKN_A;
-    long pressB = move_claw(pos + B, iter + 1) + TKN_B;
+    
+    long pressA = move_claw(M, pos - A, iter + 1) + TKN_A;
+    long pressB = move_claw(M, pos - B, iter + 1) + TKN_B;
+    //M[pos.x][pos.y] = min(pressA, pressB);
+    //return M[pos.x][pos.y];
     return min(pressA, pressB);
 }
+
 
 //prints the configuration of teh machine
 void Claws::show(){
@@ -85,19 +94,21 @@ void Claws::show(){
 
 // get the prize position at minimum cost
 void get_prize(coor A, coor B, coor prize){
+    //memoization table
+    vector<vector<int> > M(prize.x + 1, vector<int>(prize.y + 1, -1));
     Claws claws(A, B, prize);
     claws.show();
-    int cost = claws.move_claw({0,0}, 0);
+    int cost = claws.move_claw(M, prize, 0);
     if(cost == RAND_MAX)
         cout << "No solution" << endl;
     else
-        cout << "Minimum cost: " << claws.move_claw({0,0}, 0) << endl;
+        cout << "Minimum cost: " << cost << endl;
 }
 
 
 int main() {
     //load the input
-    fstream input("test.txt");
+    fstream input("testshort.txt");
     string line;
     char btn[20], name; 
     coor A, B, prize;
