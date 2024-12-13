@@ -15,37 +15,99 @@ a typical PD problem
 #include <algorithm>
 
 #define MAX_MOVES 100
+#define TKN_A 3
+#define TKN_B 1
 
 using namespace std;
 
-struct button{
+struct coor{
     int x, y;
     string show(){
         return "(" + to_string(x) + "," + to_string(y) + ")";
     }
+    bool operator ==(const coor &b){
+        return x == b.x && y == b.y;
+    }
+    bool operator > (const coor &b){
+        return x > b.x || y > b.y;
+    }
+    coor operator +(const coor  &b){
+        return {x + b.x, y + b.y};
+    }
+    coor& operator +=(const coor    &b){
+        x += b.x; y += b.y; return *this;
+    }
 };
 
 
+class Claws{
+private:
+    coor A, B, prize, pos;
+    int moves;
+    long cost;
+public:
+    Claws(coor A, coor B, coor prize);
+    int move_claw(coor pos, int inter);
+    void show();
+};
+
+
+Claws::Claws(coor A, coor B, coor prize){
+    this->A = A;
+    this->B = B;
+    this->prize = prize;
+    moves = 0;
+    cost = 0;
+    pos = {0, 0};
+}
+
+
+// move the claw to the prize position
+int Claws::move_claw(coor pos, int iter){
+    if(iter >= MAX_MOVES || pos > prize){
+        return RAND_MAX; //infinite
+    }
+    if(pos == prize){
+        return 0 ;
+    }
+    long pressA = move_claw(pos + A, iter + 1) + TKN_A;
+    long pressB = move_claw(pos + B, iter + 1) + TKN_B;
+    return min(pressA, pressB);
+}
+
+//prints the configuration of teh machine
+void Claws::show(){
+    cout << "A: " << A.show() << endl;
+    cout << "B: " << B.show() << endl;
+    cout << "Prize: " << prize.show() << endl;
+}
+
 
 // get the prize position at minimum cost
-void get_prize(button A, button B, button prize){
-    cout << "A " << A.show() << endl;
-    cout << "B " << B.show() << endl;
-    cout << "prize " << prize.show() << endl;
+void get_prize(coor A, coor B, coor prize){
+    Claws claws(A, B, prize);
+    claws.show();
+    int cost = claws.move_claw({0,0}, 0);
+    if(cost == RAND_MAX)
+        cout << "No solution" << endl;
+    else
+        cout << "Minimum cost: " << claws.move_claw({0,0}, 0) << endl;
 }
+
 
 int main() {
     //load the input
     fstream input("test.txt");
     string line;
     char btn[20], name; 
-    button A, B, prize;
+    coor A, B, prize;
     while(getline(input, line)){
         sscanf(line.c_str(), "%s %c: X+%d, Y+%d", btn, &name, &A.x, &A.y);
         getline(input, line);
         sscanf(line.c_str(), "%s %c: X+%d, Y+%d", btn, &name, &B.x, &B.y);
         getline(input, line);
-        sscanf(line.c_str(), "%s: X=%d, Y=%d", btn, &prize.x, &prize.y);
+        //be careful: this include ":" in btn since read until space
+        sscanf(line.c_str(), "%s X=%d, Y=%d", btn, &prize.x, &prize.y);
         getline(input, line);
         get_prize(A, B, prize);
     }
