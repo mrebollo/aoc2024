@@ -19,9 +19,11 @@ struct pos{
 vector<vector<int> > visited;
 
 //up, right, down, left
+#define WALL 0b10000
 enum dir {UP, RG, DW, LF}; 
 int dr[4] = {-1, 0, 1, 0}; 
 int dc[4] = {0, 1, 0, -1};
+char symbol[] = {'.','^','>','+','v','$','+','7','<','+','=','11','+'};
 
 //loads the map into a string vector
 vector<string> load(string filename){
@@ -102,12 +104,10 @@ void print_visited(){
 	for(int i = 0; i < visited.size(); i++){
 		cout << to_string(i) << ":\t";
 		for(int j = 0; j < visited.size(); j++)
-			if(visited[i][j] == -1)
+			if(visited[i][j] == WALL)
 				cout << "#";
-			else if(visited[i][j] == 0)
-				cout << ".";
-			else
-				cout << to_string(visited[i][j]);
+			else 
+				cout << symbol[visited[i][j]];
 		cout << endl;
 	}
 }
@@ -119,7 +119,7 @@ void init_visited(vector<string> &map){
 			if(map[i][j] != '#' && map[i][j] != 'H')
 				visited[i][j] = 0;
 			else
-				visited[i][j] = -1;
+				visited[i][j] = WALL;
 	}
 }
 
@@ -162,13 +162,13 @@ bool create_loop(vector<string> &map, vector<pos> &path, int obsid){
 	init_visited(map);
 	//puts an obstacle in obs
 	map[obs.x][obs.y] = 'H';
-	visited[obs.x][obs.y] = -1;
+	visited[obs.x][obs.y] = WALL;
 	//begins at previous position
 	//int r = start.x, c = start.y, h = start.h;
 	//moves until it moves away or loop detected
 	if(is_loop(map, path, start, obs)){
-		print(map);
-		print_visited();
+		//print(map);
+		//print_visited();
 		res = true;
 	}
 	//restores the map
@@ -183,7 +183,7 @@ bool create_loop(vector<string> &map, vector<pos> &path, int obsid){
 // that force the robot to get stuck on a loop
 int add_obstacles(vector<string> &map, vector<pos> &path){
 	int obstacles = 0;
-	for(int i = 8; i < 9/*path.size()*/; i++)
+	for(int i = 1; i < path.size(); i++)
 		//puts an obstacle in position i, robot in i-1
 		//and checks if it generates a loop
 		//(not needed cover path from initial position)
