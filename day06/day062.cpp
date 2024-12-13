@@ -95,9 +95,22 @@ void move(vector<string> &map, int r, int c, int h, int &steps, vector<pos> &pat
 
 void print(vector<string> &map){
 	for(int i = 0; i < map.size(); i++)
-		cout << map[i] << endl;
+		cout << to_string(i) << ":\t" << map[i] << endl;
 }
 
+void print_visited(){
+	for(int i = 0; i < visited.size(); i++){
+		cout << to_string(i) << ":\t";
+		for(int j = 0; j < visited.size(); j++)
+			if(visited[i][j] == -1)
+				cout << "#";
+			else if(visited[i][j] == 0)
+				cout << ".";
+			else
+				cout << to_string(visited[i][j]);
+		cout << endl;
+	}
+}
 void init_visited(vector<string> &map){
 	visited.resize(map.size());
 	for(int i = 0; i < map.size(); i++){
@@ -116,18 +129,22 @@ bool is_loop(vector<string> &map, vector<pos> &path, pos p, pos obs){
 	if(!inside(map, p.x, p.y))
 		return false;
 	//hits the obstacle twice -> loop
+	/*
+	puedo chocar desde otra dirección -> no es ciert
 	if(ahead(map, p.x, p.y, p.h) == 'O')
 		return true;
+	*/
 	//detect loop using a bitmask with heading -> loop
 	if(visited[p.x][p.y] & (1 << p.h))
 		return true;
+	//mark as visited
+	visited[p.x][p.y] |= (1 << p.h);
 	if(ahead(map, p.x, p.y, p.h) == 'H'){
 		//hits the obstacle once
 		map[p.x+dr[p.h]][p.y+dc[p.h]] = 'O';
  		turn(p.h);
 	}
-	//mark as visited
-	visited[p.x][p.y] |= (1 << p.h);
+
 	//turn when collision
 	if(ahead(map, p.x, p.y, p.h) == '#')
 		turn(p.h);
@@ -141,7 +158,7 @@ bool is_loop(vector<string> &map, vector<pos> &path, pos p, pos obs){
 bool create_loop(vector<string> &map, vector<pos> &path, int obsid){
 	bool res = false;
 	pos obs = path[obsid];
-	pos start = path[0];
+	pos start = path[obsid-1];
 	init_visited(map);
 	//puts an obstacle in obs
 	map[obs.x][obs.y] = 'H';
@@ -150,7 +167,8 @@ bool create_loop(vector<string> &map, vector<pos> &path, int obsid){
 	//int r = start.x, c = start.y, h = start.h;
 	//moves until it moves away or loop detected
 	if(is_loop(map, path, start, obs)){
-		//print(map);
+		print(map);
+		print_visited();
 		res = true;
 	}
 	//restores the map
@@ -165,7 +183,7 @@ bool create_loop(vector<string> &map, vector<pos> &path, int obsid){
 // that force the robot to get stuck on a loop
 int add_obstacles(vector<string> &map, vector<pos> &path){
 	int obstacles = 0;
-	for(int i = 1; i < path.size(); i++)
+	for(int i = 8; i < 9/*path.size()*/; i++)
 		//puts an obstacle in position i, robot in i-1
 		//and checks if it generates a loop
 		//(not needed cover path from initial position)
