@@ -11,8 +11,7 @@ a typical PD problem
 #include <fstream>
 #include <string>
 #include <vector>
-#include <queue>
-#include <algorithm>
+//#include <algorithm>
 
 #define MAX_MOVES 100
 #define TKN_A 3
@@ -40,12 +39,12 @@ coor origin = {0, 0};
 
 class Claws{
 private:
-    coor A, B, prize, pos;
+    coor A, B, prize;
     int moves;
     long cost;
 public:
     Claws(coor A, coor B, coor prize);
-    int move_claw(vector<vector<int> > &M, coor pos, int inter);
+    int move_claw(vector<vector<int> > &M, coor pos, int nA, int nB);
     void show();
 };
 
@@ -56,28 +55,28 @@ Claws::Claws(coor A, coor B, coor prize){
     this->prize = prize;
     moves = 0;
     cost = 0;
-    pos = {0, 0};
 }
 
 
 // move the claw to the prize position
-int Claws::move_claw(vector<vector<int> > &M, coor pos, int iter){
-    if(iter >= MAX_MOVES || pos < origin){
-        return RAND_MAX; //infinite
+int Claws::move_claw(vector<vector<int> > &M, coor pos, int nA, int nB){
+    if(pos < origin || nA > MAX_MOVES || nB > MAX_MOVES){
+        return 99999; //infinite
     }
     if(M[pos.x][pos.y] != -1){
         return M[pos.x][pos.y];
-    }    
+    }   
     if(pos == origin){
         M[0][0] = 0;
+        //return 0;
     }
     else{
-    long pressA = move_claw(M, pos - A, iter + 1) + TKN_A;
-    long pressB = move_claw(M, pos - B, iter + 1) + TKN_B;
-    M[pos.x][pos.y] = min(pressA, pressB);
+        long pressA = move_claw(M, pos - A, ++nA, nB) + TKN_A;
+        long pressB = move_claw(M, pos - B, nA, ++nB) + TKN_B;
+        M[pos.x][pos.y] = min(pressA, pressB);
+        //return min(pressA, pressB);
     }
     return M[pos.x][pos.y];
-    //return min(pressA, pressB);
 }
 
 
@@ -95,7 +94,7 @@ void get_prize(coor A, coor B, coor prize){
     vector<vector<int> > M(prize.x + 1, vector<int>(prize.y + 1, -1));
     Claws claws(A, B, prize);
     claws.show();
-    int cost = claws.move_claw(M, prize, 0);
+    int cost = claws.move_claw(M, prize, 0, 0);
     if(cost == RAND_MAX)
         cout << "No solution" << endl;
     else
@@ -105,7 +104,7 @@ void get_prize(coor A, coor B, coor prize){
 
 int main() {
     //load the input
-    fstream input("test.txt");
+    fstream input("testshort.txt");
     string line;
     char btn[20], name; 
     coor A, B, prize;
