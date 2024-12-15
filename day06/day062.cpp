@@ -100,13 +100,15 @@ void print(vector<string> &map){
 		cout << to_string(i) << ":\t" << map[i] << endl;
 }
 
-void print_visited(){
+void print_visited(pos obs){
 	for(int i = 0; i < visited.size(); i++){
 		cout << to_string(i) << ":\t";
-		for(int j = 0; j < visited.size(); j++)
-			if(visited[i][j] == WALL)
+		for(int j = 0; j < visited[i].size(); j++)
+			if( i == obs.x && j == obs.y)
+				cout << "O";
+			else if(visited[i][j] == WALL)
 				cout << "#";
-			else 
+			else
 				cout << symbol[visited[i][j]];
 		cout << endl;
 	}
@@ -158,7 +160,7 @@ bool is_loop(vector<string> &map, vector<pos> &path, pos p, pos obs){
 bool create_loop(vector<string> &map, vector<pos> &path, int obsid){
 	bool res = false;
 	pos obs = path[obsid];
-	pos start = path[obsid-1];
+	pos start = path[0];
 	init_visited(map);
 	//puts an obstacle in obs
 	map[obs.x][obs.y] = 'H';
@@ -168,7 +170,7 @@ bool create_loop(vector<string> &map, vector<pos> &path, int obsid){
 	//moves until it moves away or loop detected
 	if(is_loop(map, path, start, obs)){
 		//print(map);
-		//print_visited();
+		//print_visited(path[obsid]);
 		res = true;
 	}
 	//restores the map
@@ -183,7 +185,7 @@ bool create_loop(vector<string> &map, vector<pos> &path, int obsid){
 // that force the robot to get stuck on a loop
 int add_obstacles(vector<string> &map, vector<pos> &path){
 	int obstacles = 0;
-	for(int i = 1; i < path.size(); i++)
+	for(int i = 0; i < path.size(); i++)
 		//puts an obstacle in position i, robot in i-1
 		//and checks if it generates a loop
 		//(not needed cover path from initial position)
