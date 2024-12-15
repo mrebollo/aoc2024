@@ -13,6 +13,7 @@ a typical PD problem
 #include <vector>
 //#include <algorithm>
 
+#define MAX_VALUE 99999
 #define MAX_MOVES 100
 #define TKN_A 3
 #define TKN_B 1
@@ -61,11 +62,12 @@ Claws::Claws(coor A, coor B, coor prize){
 // move the claw to the prize position
 int Claws::move_claw(vector<vector<int> > &M, coor pos, int nA, int nB){
     if(pos < origin || nA > MAX_MOVES || nB > MAX_MOVES){
-        return 99999; //infinite
+        return MAX_VALUE; //infinite
     }
     if(M[pos.x][pos.y] != -1){
         return M[pos.x][pos.y];
     }   
+    int cost = 0;
     if(pos == origin){
         M[0][0] = 0;
         //return 0;
@@ -95,7 +97,7 @@ void get_prize(coor A, coor B, coor prize){
     Claws claws(A, B, prize);
     claws.show();
     int cost = claws.move_claw(M, prize, 0, 0);
-    if(cost == RAND_MAX)
+    if(cost >= MAX_VALUE)
         cout << "No solution" << endl;
     else
         cout << "Minimum cost: " << cost << endl;
