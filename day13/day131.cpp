@@ -73,8 +73,8 @@ int Claws::move_claw(vector<vector<int> > &M, coor pos, int nA, int nB){
         //return 0;
     }
     else{
-        long pressA = move_claw(M, pos - A, ++nA, nB) + TKN_A;
-        long pressB = move_claw(M, pos - B, nA, ++nB) + TKN_B;
+        long pressA = move_claw(M, pos - A, nA+1, nB) + TKN_A;
+        long pressB = move_claw(M, pos - B, nA, nB+1) + TKN_B;
         M[pos.x][pos.y] = min(pressA, pressB);
         //return min(pressA, pressB);
     }
@@ -91,25 +91,29 @@ void Claws::show(){
 
 
 // get the prize position at minimum cost
-void get_prize(coor A, coor B, coor prize){
+int get_prize(coor A, coor B, coor prize){
     //memoization table
     vector<vector<int> > M(prize.x + 1, vector<int>(prize.y + 1, -1));
     Claws claws(A, B, prize);
     claws.show();
     int cost = claws.move_claw(M, prize, 0, 0);
-    if(cost >= MAX_VALUE)
+    if(cost >= MAX_VALUE){
         cout << "No solution" << endl;
+        cost = 0;
+    }
     else
         cout << "Minimum cost: " << cost << endl;
+    return cost;
 }
 
 
 int main() {
     //load the input
-    fstream input("testshort.txt");
+    fstream input("input.txt");
     string line;
     char btn[20], name; 
     coor A, B, prize;
+    int tokens = 0;
     while(getline(input, line)){
         sscanf(line.c_str(), "%s %c: X+%d, Y+%d", btn, &name, &A.x, &A.y);
         getline(input, line);
@@ -118,8 +122,9 @@ int main() {
         //be careful: this include ":" in btn since read until space
         sscanf(line.c_str(), "%s X=%d, Y=%d", btn, &prize.x, &prize.y);
         getline(input, line);
-        get_prize(A, B, prize);
+        tokens += get_prize(A, B, prize);
     }
     input.close();
+    cout << "Tokens: " << tokens << endl;
     return 0;
 }
