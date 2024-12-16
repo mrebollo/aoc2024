@@ -11,25 +11,27 @@ turn +90/-90 degrees when hitting a wall (cost +1000)
 #include <queue>
 
 using namespace std;
-int inline max(int a, int b) {return (a > b) ? a : b;}
 enum dir {UP, RG, DW, LF}; 
 int dr[4] = {-1, 0, 1, 0}; //up, right, down, left
 int dc[4] = {0, 1, 0, -1};
 char head[4] = {'^', '>', 'v', '<'};
-char left[4] = {'<', '^', '>', 'V'};
-char right[4] = {'>', 'v', '<', '^'};
+int turnleft[4] = {LF, UP, RG, DW};
+int turnright[4] = {RG, DW, LF, UP};
+
 
 class Laberynth{
     private:    
         vector<string> map;
         size_t size;
-
     public:
         Laberynth(string filename);
         void print();
         int solve();
     private:
         int visitCell(int row, int col, int hd, int steps);
+        char ahead(int row, int col, int hd);
+        char ontheleft(int row, int col, int hd);
+        char ontheright(int row, int col, int hd);
 };
 
 
@@ -62,35 +64,68 @@ void Laberynth::print() {
 }
 
 
-int Laberynth::solve(){
-    int srow = size-2, scol = 1, shead = ratio_greater;
-    cout << "start: " << srow << ", " << scol << " - " shead << endl;
-    int len = visitCell(srow, scol, shead, 0);
-    cout << "shortest path: " << len << endl;
-    return 0;
+
+char Laberynth::ahead(int row, int col, int hd){
+    int r = row + dr[hd];
+    int c = col + dc[hd];
+    return map[r][c];
+}
+
+char Laberynth::ontheleft(int row, int col, int hd){
+    int r = row + dr[turnleft[hd]];
+    int c = col + dc[turnleft[hd]];
+    return map[r][c];
+}
+
+char Laberynth::ontheright(int row, int col, int hd){
+    int r = row + dr[turnright[hd]];
+    int c = col + dc[turnright[hd]];
+    return map[r][c];
 }
 
 
 int Laberynth::visitCell(int row, int col, int hd, int steps) {
+    cout << "visiting: " << row << ", " << col << " - " << head[hd] << " - " << steps << endl;
     if (map[row][col] == 'E') {
         print();
         cout << "exit in " << steps << " steps" << endl;
         return steps;
     }
     // mark cell as visited and save original value
+    vector<int> dist(3, RAND_MAX);
+    char lf = ontheleft(row, col, hd);
+    char rg = ontheright(row, col, hd);
+    char ah = ahead(row, col, hd);
+    // save cell
     char savedtile = map[row][col];
     map[row][col] = 'O';
-    int dist[3] = {0};
-    for(int i = 0; i < 4; i++){
-        int r = row + dr[i];
-        int c = col + dc[i];
-        //only valid neighbors (reduce calls)
-        if(map[r][c] != '#' && map[r][c] != 'O' && map[r][c] != barrier[i])
-            dist[i] = visitCell(r, c, h, steps+1);
+    int r, c;
+    if(ah != '#' && ah != 'O'){
+        r = row + dr[hd]; c = col + dc[hd];
+        dist[0] =  visitCell(r, c, hd, steps+1);
     }
-    //restore cell
+    if(lf != '#' && lf != 'O'){
+        r = row + dr[turnleft[hd]]; c = col + dc[turnleft[hd]];
+        dist[1] = 1000 + visitCell(row, col, turnleft[hd], steps+1);
+    }
+    if(rg != '#' && rg != 'O'){
+        r = row + dr[turnright[hd]]; c = col + dc[turnright[hd]];
+        dist[2] = 1000 + visitCell(row, col, turnright[hd], steps+1);
+    }
+     //restore cell
     map[row][col] = savedtile;
-    return max(max(dist[0], dist[1]), max(dist[2], dist[3]));
+    return *min_element(dist.begin(), dist.end());
+
+}
+
+
+
+int Laberynth::solve(){
+    int srow = size-2, scol = 1, shead = RG;
+    cout << "start: " << srow << ", " << scol << " - " << shead << endl;
+    int len = visitCell(srow, scol, shead, 0);
+    cout << "shortest path: " << len << endl;
+    return 0;
 }
 
 
