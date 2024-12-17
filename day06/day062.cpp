@@ -78,6 +78,13 @@ void move(vector<string> &map, int r, int c, int h, int &steps, vector<pos> &pat
 	//it moves away, terminates
 	if(!inside(map, r, c))
 		return;
+	/* include already visited in the path
+	//saves visited in the path
+	if (map[r][c] != '#'){
+			pos p = {r, c, h};
+			path.push_back(p);
+	}
+	*/
 	//mark and count visited
 	if(map[r][c] != 'x'){
 		//saves visited in the path
