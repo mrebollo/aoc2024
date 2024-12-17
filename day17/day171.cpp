@@ -11,7 +11,7 @@ instruction (codified in 3 bits)
     - op 0 adv: A = A / combo op^2
     - op 1 bxl: B = B XOR literal op
     - op 2 bst: B = combo op % 8
-    - op 3 jnz: op pointr += literal op if A != 0
+    - op 3 jnz: op pointr = literal op if A != 0
     - op 4 bxc: B = B XOR C
     - op 5 out: out <- combo op % 8
     - op 6 bdv: B = A / combo op^2
@@ -134,7 +134,7 @@ void Computer::print_state(){
     cout << "Register C: " << registers[C] << endl;
     cout << "Output: ";
     for(int out : output)
-        cout << out;
+        cout << out << ",";
     cout << endl;
 }
 
