@@ -76,7 +76,7 @@ char Laberynth::ontheright(int row, int col, int hd){
     return map[r][c];
 }
 
-
+/*
 int Laberynth::visitCell(int row, int col, int hd, int steps) {
     if(steps > 60) exit(0);
     print();
@@ -113,6 +113,34 @@ int Laberynth::visitCell(int row, int col, int hd, int steps) {
     return min(dist[0], min(dist[1], dist[2]));
 
 }
+*/
+
+int Laberynth::visitCell(int srow, int scol, int hd, int steps) {
+    struct cell{
+        int row,col,cost;
+    };
+
+    queue<cell> q;
+    q.push({srow, scol,0});
+    while(!q.empty()){
+        print();
+        int row = q.front().row;
+        int col = q.front().col;
+        int cost = q.front().cost;
+        q.pop();
+        for(int i = 0; i < 4; i++){
+            int r = row + dr[i];
+            int c = col + dc[i];
+            if(map[r][c] == 'E') return cost;
+            if(map[r][c] == '.'){
+                q.push({r, c, cost+1});
+                map[r][c] = 'o';
+            }
+        }
+    }
+    return -1;
+
+}
 
 
 //shortest path from 'S' to 'E' using bread first search
@@ -146,9 +174,9 @@ int Laberynth::solve(){
     int srow = size-2, scol = 1, shead = RG;
     cout << "start: " << srow << ", " << scol << " - " << shead << endl;
     map[srow][scol] = 'o';
-    //int len = visitCell(srow, scol, shead, 0);
+    int len = visitCell(srow, scol, shead, 0);
 
-    int len = shortest_path(srow, scol, shead);
+    //int len = shortest_path(srow, scol, shead);
     cout << "shortest path: " << len << endl;
     return 0;
 }
