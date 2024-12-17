@@ -17,6 +17,7 @@ int dc[4] = {0, 1, 0, -1};
 char head[4] = {'^', '>', 'v', '<'};
 int turnleft[4] = {LF, UP, RG, DW};
 int turnright[4] = {RG, DW, LF, UP};
+inline int min(int a, int b) { return (a < b) ? a : b; }
 
 
 class Laberynth{
@@ -28,7 +29,7 @@ class Laberynth{
         void print();
         int solve();
     private:
-        int shortest_path(int srow, int scol, int shead, int steps);
+        int shortest_path(int srow, int scol, int shead);
         int visitCell(int row, int col, int hd, int steps);
         char ahead(int row, int col, int hd);
         char ontheleft(int row, int col, int hd);
@@ -109,26 +110,31 @@ int Laberynth::visitCell(int row, int col, int hd, int steps) {
    
      //restore cell
     //map[row][col] = savedtile;
-    return *min_element(dist.begin(), dist.end());
+    return min(dist[0], min(dist[1], dist[2]));
 
 }
 
 
 //shortest path from 'S' to 'E' using bread first search
-int Laberynth::shortest_path(int srow, int scol, int shead, int steps){
+int Laberynth::shortest_path(int srow, int scol, int shead){
+    queue<int> steps;
     queue<pair<int, int> > q;
     q.push(make_pair(srow, scol));
+    steps.push(0);
     while(!q.empty()){
         print();
         int row = q.front().first;
         int col = q.front().second;
         q.pop();
+        int level = steps.front();
+        steps.pop();
         for(int i = 0; i < 4; i++){
             int r = row + dr[i];
             int c = col + dc[i];
-            if(map[r][c] == 'E') return 0;
+            if(map[r][c] == 'E') return level;
             if(map[r][c] == '.'){
                 q.push(make_pair(r, c));
+                steps.push(level+1);
                 map[r][c] = 'o';
             }
         }
@@ -141,7 +147,8 @@ int Laberynth::solve(){
     cout << "start: " << srow << ", " << scol << " - " << shead << endl;
     map[srow][scol] = 'o';
     //int len = visitCell(srow, scol, shead, 0);
-    int len = shortest_path(srow, scol, shead, 0);
+
+    int len = shortest_path(srow, scol, shead);
     cout << "shortest path: " << len << endl;
     return 0;
 }
