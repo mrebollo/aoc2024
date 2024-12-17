@@ -117,25 +117,40 @@ int Laberynth::visitCell(int row, int col, int hd, int steps) {
 
 int Laberynth::visitCell(int srow, int scol, int hd, int steps) {
     struct cell{
-        int row,col,cost;
+        int row,col,hd,cost;
+        cell(int r, int c, int h, int co): row(r), col(c), hd(h), cost(co){}
     };
-
-    queue<cell> q;
-    q.push({srow, scol,0});
+    struct lower_cost{
+        bool operator()(cell& c1, cell& c2)
+        {return c1.cost > c2.cost;}
+    };
+    priority_queue<cell, vector<cell>, lower_cost> q;
+    q.push(cell(srow, scol, hd, 0));
     while(!q.empty()){
         print();
-        int row = q.front().row;
-        int col = q.front().col;
-        int cost = q.front().cost;
+        cell pos = q.top();
         q.pop();
-        for(int i = 0; i < 4; i++){
-            int r = row + dr[i];
-            int c = col + dc[i];
-            if(map[r][c] == 'E') return cost;
-            if(map[r][c] == '.'){
-                q.push({r, c, cost+1});
-                map[r][c] = 'o';
-            }
+        //ahead
+        int r = pos.row + dr[pos.hd];
+        int c = pos.col + dc[pos.hd];
+        if(map[r][c] == 'E') return pos.cost;
+        if(map[r][c] == '.'){
+            q.push(cell(r, c, pos.hd, pos.cost+1));
+            map[r][c] = 'o';
+        }
+        //left
+        r = pos.row + dr[turnleft[pos.hd]];
+        c = pos.col + dc[turnleft[pos.hd]];
+        if(map[r][c] == '.' || map[r][c] == 'E'){
+            q.push(cell(r, c, turnleft[pos.hd], pos.cost+1000));
+            map[r][c] = 'o';
+        }
+        //right
+        r = pos.row + dr[turnright[pos.hd]];
+        c = pos.col + dc[turnright[pos.hd]];
+        if(map[r][c] == '.' || map[r][c] == 'E'){
+            q.push(cell(r, c, turnright[pos.hd], pos.cost+1000));
+            map[r][c] = 'o';
         }
     }
     return -1;
