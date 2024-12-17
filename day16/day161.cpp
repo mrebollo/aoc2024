@@ -127,30 +127,32 @@ int Laberynth::visitCell(int srow, int scol, int hd, int steps) {
     priority_queue<cell, vector<cell>, lower_cost> q;
     q.push(cell(srow, scol, hd, 0));
     while(!q.empty()){
-        print();
+        //print();
         cell pos = q.top();
         q.pop();
+        if(map[pos.row][pos.col] == 'E') return pos.cost;
+        map[pos.row][pos.col] = 'o';
         //ahead
         int r = pos.row + dr[pos.hd];
         int c = pos.col + dc[pos.hd];
-        if(map[r][c] == 'E') return pos.cost;
-        if(map[r][c] == '.'){
+        if(map[r][c] != '#' && map[r][c] != 'o'){
             q.push(cell(r, c, pos.hd, pos.cost+1));
-            map[r][c] = 'o';
         }
         //left
         r = pos.row + dr[turnleft[pos.hd]];
         c = pos.col + dc[turnleft[pos.hd]];
-        if(map[r][c] == '.' || map[r][c] == 'E'){
-            q.push(cell(r, c, turnleft[pos.hd], pos.cost+1000));
-            map[r][c] = 'o';
+        if(map[r][c] != '#' && map[r][c] != 'o'){
+            //just turn
+            q.push(cell(pos.row, pos.col, turnleft[pos.hd], pos.cost+1000));
+            //map[r][c] = 'o';
         }
         //right
         r = pos.row + dr[turnright[pos.hd]];
         c = pos.col + dc[turnright[pos.hd]];
-        if(map[r][c] == '.' || map[r][c] == 'E'){
-            q.push(cell(r, c, turnright[pos.hd], pos.cost+1000));
-            map[r][c] = 'o';
+        if(map[r][c] != '#' && map[r][c] != 'o'){
+            //just turn
+            q.push(cell(pos.row, pos.col, turnright[pos.hd], pos.cost+1000));
+            //map[r][c] = 'o';
         }
     }
     return -1;
@@ -185,6 +187,7 @@ int Laberynth::shortest_path(int srow, int scol, int shead){
     return -1;
 }
 
+
 int Laberynth::solve(){
     int srow = size-2, scol = 1, shead = RG;
     cout << "start: " << srow << ", " << scol << " - " << shead << endl;
@@ -198,7 +201,7 @@ int Laberynth::solve(){
 
 
 int main() {
-    Laberynth lab("test1.txt");
+    Laberynth lab("input.txt");
     lab.print();
     lab.solve();
     return 0;
