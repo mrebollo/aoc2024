@@ -21,6 +21,9 @@ ptr: pointer to the current instruction
 registers: A, B, C
 output: the output of the program
 ptr += 2 after each instruction (except jnz)
+
+Modify to get as ouput a copy of the program
+Obtain initial value in A register
 */
 
 #include <iostream>
@@ -28,6 +31,7 @@ ptr += 2 after each instruction (except jnz)
 #include <string>
 #include <sstream>
 #include <vector>
+#include <bitset>
 
 using namespace std;
 
@@ -42,11 +46,14 @@ class Computer{
     public:
         Computer(string filename);
         void run();
+        void run_backwards();
         void print_state();
         void print_program();
+        void reset(long long a=0, long long  b=0, long long  c=0);
+        bool match();
     private:
         vector<int> program;
-        vector<int> registers;
+        vector<long long> registers;
         vector<int> output;
         int ptr;
         int get_operand(int op);
@@ -127,6 +134,51 @@ void Computer::run(){
 }
 
 
+void Computer::run_backwards(){
+    int op, combo, literal;
+    ptr = 0;
+    while(ptr < program.size()){
+        op = program[ptr];
+        literal = program[ptr+1];
+        combo = get_operand(literal);
+        switch(op){
+            case adv:
+                registers[A] /= pow(2,combo);
+                break;
+            case bxl:
+                registers[B] ^= literal;
+                break;
+            case bst:
+                registers[B] = combo % 8;
+                break;
+            case jnz:
+                if(registers[A] != 0){
+                    ptr = literal;
+                    continue; // skip ptr += 2
+                }
+                break;
+            case bxc:
+                registers[B] ^= registers[C];
+                break;
+            case out:
+                output.push_back(combo % 8);
+                break;
+            case bdv:
+                registers[B] = registers[A] / pow(2,combo);
+                break;
+            case cdv:
+                registers[C] = registers[A] / pow(2,combo);
+                break;
+        }
+#ifdef _DEBUG
+        cout << "op: " << opname[op] << " literal: " << literal << " combo: " << combo << endl;
+        print_state();
+#endif
+        ptr += 2;
+    }
+}   
+
+
 void Computer::print_state(){
     cout << "Register A: " << registers[A] << endl;
     cout << "Register B: " << registers[B] << endl;
@@ -144,12 +196,30 @@ void Computer::print_program(){
 }
 
 
+void Computer::reset(long long  a, long long  b, long long  c){
+    registers[A] = a;
+    registers[B] = b;
+    registers[C] = c;
+    output.clear();
+    ptr = 0;
+}
+
+bool Computer::match(){
+    return output == program;
+}
 
 int main(){
+    int A = 0;
     Computer cmp("input.txt");
+    //do{
+        cmp.reset(1234567890123125);
+        cmp.print_state();
+        cmp.run();
+        if( A % 1000000 == 0)
+            cout << "A: " << A << endl;
+    //}while(!cmp.match());
     cmp.print_state();
-    cmp.print_program();
-    cmp.run();
-    cmp.print_state();
+    cout << "match " << cmp.match() << endl;
+    cout << "register A: " << A << endl;
     return 0;
 }
