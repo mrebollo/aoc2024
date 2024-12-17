@@ -28,6 +28,7 @@ class Laberynth{
         void print();
         int solve();
     private:
+        int shortest_path(int srow, int scol, int shead, int steps);
         int visitCell(int row, int col, int hd, int steps);
         char ahead(int row, int col, int hd);
         char ontheleft(int row, int col, int hd);
@@ -47,18 +48,9 @@ Laberynth::Laberynth(string filename) {
 
 
 void Laberynth::print() {
-    //simlifica la salida para que se vea mejor
-    for(int i = 0; i < size; i++) {
-        //cout << map[i] << endl;
-        for(int j = 0; j < size; j++)
-            if( map[i][j] == 'O')
-                cout << 'o';
-            else if (map[i][j] == '#')
-                cout << '.';
-            else if (map[i][j] == '.')
-                cout << ' ';
-            else
-                cout << map[i][j];
+    for(string &line: map){
+        for(char &c: line)
+            cout << ((c == '.') ? ' ' : c);
         cout << endl;
     }
 }
@@ -85,7 +77,9 @@ char Laberynth::ontheright(int row, int col, int hd){
 
 
 int Laberynth::visitCell(int row, int col, int hd, int steps) {
-    cout << "visiting: " << row << ", " << col << " - " << head[hd] << " - " << steps << endl;
+    if(steps > 60) exit(0);
+    print();
+    cout << "visiting: [" << steps << "] " << row << ", " << col << " " << head[hd] << endl;
     if (map[row][col] == 'E') {
         print();
         cout << "exit in " << steps << " steps" << endl;
@@ -97,33 +91,57 @@ int Laberynth::visitCell(int row, int col, int hd, int steps) {
     char rg = ontheright(row, col, hd);
     char ah = ahead(row, col, hd);
     // save cell
-    char savedtile = map[row][col];
-    map[row][col] = 'O';
+    //char savedtile = map[row][col];
+     map[row][col] = 'o';
     int r, c;
-    if(ah != '#' && ah != 'O'){
+    if(ah != '#' && ah != 'o'){
         r = row + dr[hd]; c = col + dc[hd];
         dist[0] =  visitCell(r, c, hd, steps+1);
     }
-    if(lf != '#' && lf != 'O'){
+    if(lf != '#' && lf != 'o'){
         r = row + dr[turnleft[hd]]; c = col + dc[turnleft[hd]];
         dist[1] = 1000 + visitCell(row, col, turnleft[hd], steps+1);
     }
-    if(rg != '#' && rg != 'O'){
+    if(rg != '#' && rg != 'o'){
         r = row + dr[turnright[hd]]; c = col + dc[turnright[hd]];
         dist[2] = 1000 + visitCell(row, col, turnright[hd], steps+1);
     }
+   
      //restore cell
-    map[row][col] = savedtile;
+    //map[row][col] = savedtile;
     return *min_element(dist.begin(), dist.end());
 
 }
 
 
+//shortest path from 'S' to 'E' using bread first search
+int Laberynth::shortest_path(int srow, int scol, int shead, int steps){
+    queue<pair<int, int> > q;
+    q.push(make_pair(srow, scol));
+    while(!q.empty()){
+        print();
+        int row = q.front().first;
+        int col = q.front().second;
+        q.pop();
+        for(int i = 0; i < 4; i++){
+            int r = row + dr[i];
+            int c = col + dc[i];
+            if(map[r][c] == 'E') return 0;
+            if(map[r][c] == '.'){
+                q.push(make_pair(r, c));
+                map[r][c] = 'o';
+            }
+        }
+    }
+    return -1;
+}
 
 int Laberynth::solve(){
     int srow = size-2, scol = 1, shead = RG;
     cout << "start: " << srow << ", " << scol << " - " << shead << endl;
-    int len = visitCell(srow, scol, shead, 0);
+    map[srow][scol] = 'o';
+    //int len = visitCell(srow, scol, shead, 0);
+    int len = shortest_path(srow, scol, shead, 0);
     cout << "shortest path: " << len << endl;
     return 0;
 }
