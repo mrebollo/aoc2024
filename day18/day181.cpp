@@ -18,7 +18,8 @@ int dc[4] = {0, 1, 0, -1};
 
 class Laberynth{
     private:    
-        vector<vector<int> > map;
+        vector<string> map;
+        vector<vector<int> > M; //memoization
         size_t size;
     public:
         Laberynth(string filename, int size, int corrupted);
@@ -34,13 +35,19 @@ Laberynth::Laberynth(string filename, int size, int corrupted) {
     fstream inputf(filename);
     string line;
     int row, col;
+    //initialize map and memoization matrix
     map.resize(size);
-    for ( int i = 0 ; i < size ; i++ )
-        map[i].resize(size, 0);
+    M.resize(size);
+    for ( int i = 0 ; i < size ; i++ ){
+        M[i].resize(size, 0);
+        map[i].resize(size, '.');
+    }
+    //load matrix
     for(int i = 0; i < corrupted; i++){
         getline(inputf, line);
         sscanf(line.c_str(), "%d,%d", &col, &row);
-        map[row][col] = -1;
+        M[row][col] = '-1';
+        map[row][col] = '#';
     }
     inputf.close();
     this->size = map.size();
@@ -48,13 +55,8 @@ Laberynth::Laberynth(string filename, int size, int corrupted) {
 
 
 void Laberynth::print() {
-    for(int i = 0; i < size; i++){
-        for(int j = 0; j < size; j++)
-            if (map[i][j] == 0) cout << '.';
-            else if (map[i][j] == -1) cout << '#';
-            else cout << 'o';
-        cout << endl;
-    }
+    for(string s: map)
+        cout << s << endl;
     cout << "----------------" << endl;
 }
 
@@ -72,7 +74,7 @@ int Laberynth::shortest_path(int row, int col){
     };
     struct lower_cost{
         bool operator()(cell& c1, cell& c2)
-        {return c1.level > c2.level;}
+        {return c1.level > c2.level && c1.row > c2.row && c1.col > c2.col;}
     };
     priority_queue<cell, vector<cell>, lower_cost> q;
     q.push(cell(row, col,0));
@@ -82,12 +84,12 @@ int Laberynth::shortest_path(int row, int col){
         int col = q.top().col;
         int level = q.top().level;
         q.pop();
-        map[row][col] = level;
+        map[row][col] = 'o';
         if(row == size-1 && col == size-1) return level;
         for(int i = 0; i < 4; i++){
             int r = row + dr[i];
             int c = col + dc[i];
-            if(inside(r,c) && map[r][c] == 0){
+            if(inside(r,c) && map[r][c] == '.'){
                 q.push(cell(r, c, level+1));
             }
         }
@@ -103,9 +105,9 @@ int Laberynth::solve(){
 
 
 int main() {
-    Laberynth lab("test.txt", 71, 1024);
+    Laberynth lab("input.txt", 71, 1024);
     //Laberynth lab("test.txt", 7, 12);
-    //lab.print();
+    lab.print();
     lab.solve();
     return 0;
 }
