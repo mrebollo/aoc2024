@@ -2,53 +2,78 @@
 advent of code day 19 (1)
 identify vallid patterns formed from strips
 -> valid words of a formal grammar
+Recursive look for prefixes of the string that are in the dictionary until end or fail
 */
 
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <sstream>
-#include <regex>
+#include <vector>
 using namespace std;
 
-string strips;
 
+// hash table with chaining for conflict resolution
+class Hash{
+    private:
+        vector<vector<string> > table;
+    public:
+        Hash();
+        void insert(string value){
+            int key = value[0] - 'a';
+            table[key].push_back(value);
+        }
+        vector<string>& get_all(char c){
+            int key = c - 'a';
+            return table[key];
+        }
+};
 
-
-// if strips are a, b, c, the regular expression is
-// [[a*b*c*][a*b*c*][a*b*c*]]+
-void generate_expression(string s){
-    int len = 0;
-    strips += "[";
-    stringstream ss(s);
-    string token = "[";
-    while( ss.good() ){
-        string combination;
-        getline( ss, combination, ',' );
-        token += combination + "*";
-        len++;
-    }
-    token += "]";
-    //concatenate tokens n times
-    for (int i = 0; i < len; i++)
-        strips += token;
-    strips += "]+";
+Hash::Hash(){
+    table.resize(26);
 }
 
+Hash strips;
+
+//return all prefixes of a string that are in the dictionary
+vector<string>& obtain_prefixes(string s){
+    return strips.get_all(s[0]);
+}
+
+
+//recursive function to check if a string is valid
 bool is_valid(string s){
-    regex r(strips);
-    smatch m;
-    return regex_match(s, m, r);
+    if(s.size() == 0)
+        return true;
+    vector<string>& prefixes = obtain_prefixes(s);
+    for (string prefix : prefixes){
+        if(s.substr(0, prefix.size()) == prefix &&
+           is_valid(s.substr(prefix.size())))
+            return true;
+    }
+    return false;
+}
+
+
+//load dictionary from file
+void load_dictionary(string line){
+    stringstream ss(line);
+    string word;
+    while(getline(ss, word, ',')){
+        // remove heading blanks
+        if(word[0] == ' ')
+            word = word.substr(1);
+        strips.insert(word);
+    }
 }
 
 
 int main() {
-    ifstream file("test.txt");
+    ifstream file("input.txt");
     string line;
     //read strips from file
     getline(file, line);
-    generate_expression(line);
-    cout << "strips: " << strips << endl;
+    load_dictionary(line);
     //blank line
     getline(file, line);
     //read and analayze combinations
