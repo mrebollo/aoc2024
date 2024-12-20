@@ -1,8 +1,8 @@
 /*
 advent of code day 20 (1)
-shortest path in la laberyth (traditional way)
+shortest path in a laberyth removing walls
 
-The are two laberynths in the corners, and a plain area in between
+It's mnot needed to recalculate: difference between the extremes
 */
 
 #include <iostream>
@@ -24,11 +24,6 @@ struct cell{
     cell(int r, int c, int l): row(r), col(c), level(l) {}
 };
 
-struct lower_cost{
-    bool operator()(cell& c1, cell& c2)
-    {return c1.level > c2.level && c1.row > c2.row && c1.col > c2.col;}
-};
-
 
 class Laberynth{
     private:    
@@ -44,10 +39,6 @@ class Laberynth{
         cell shortest_path(pair<int, int> &start, pair<int, int> &end);
         inline bool inside(int row, int col){
             return row >= 0 && row < size && col >= 0 && col < size;
-        }
-        bool in_plain(int row, int col);
-        inline int manhattan(cell c1, cell c2){
-            return abs(c1.row - c2.row) + abs(c1.col - c2.col);
         }
         void add_to_path(cell c){ path.push_back(c); }
         vector<cell> vertical_removable();
