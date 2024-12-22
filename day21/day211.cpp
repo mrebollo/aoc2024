@@ -116,6 +116,8 @@ int Keypad::directions(int from, int to, Keypad *controlled){
             redirect = nmoves(at, i);
             moves += redirect + rep - 1;
             at = i;
+            for(int j = 0; j < rep-1; j++)
+                output.push_back('A');
         }
         //accumulate the movements
         //repetitios just implies press the button again in the same direction
@@ -167,7 +169,7 @@ int tonumber(string s){
 int main() {
     string code;
     Keypad cold(distDIR);
-    Keypad radiation(distDIR, &cold);
+    Keypad radiation(distDIR);//, &cold);
     Keypad numeric(distKB, &radiation);
     // use numeric keypad directly
     //Keypad numeric(distKB);
@@ -185,11 +187,25 @@ int main() {
 }
 
 /* test output
+1st robot
+029A: <A^A^^>AvvvA (12)
+980A: ^^^A<AvvvA>A (12)
+179A: ^<<A^^A>>AvvvA (14)
+456A: ^^<<A>A>AvvA (12)
+379A: ^A^^<<A>>AvvvA (14)
+
+2nd robot
+      <   A   ^ A ^^>  A  vvvA 
+      v<<A>>^A<A>AvA<^AA>A<vAAA>^A
+029A: v<<A^>>A<A>A<Av>A^Av<A^>A (28)
+980A: <A>Av<<A^>>Av<A^>AvA^A (26)
+179A: <Av<A^>>A<A>AvA^Av<A^>A (28)
+456A: <Av<A^>>AvA^AvA^Av<A^>A (28)
+
+3rd robot
 029A: <vA<AA>>^AvAA<^A>A<v<A>>^AvA^A<vA>^A<v<A>^A>AAvA^A<v<A>A>^AAAvA<^A>A 68
 980A: <v<A>>^AAAvA^A<vA<AA>>^AvAA<^A>A<v<A>A>^AAAvA<^A>A<vA>^A<A>A 60
 179A: <v<A>>^A<vA<A>>^AAvAA<^A>A<v<A>>^AAvA^A<vA>^AA<A>A<v<A>A>^AAAvA<^A>A 68
 456A: <v<A>>^AA<vA<A>>^AAvAA<^A>A<vA>^A<A>A<vA>^A<A>A<v<A>A>^AAvA<^A>A 64
 379A: <v<A>>^AvA^A<vA<AA>>^AAvA<^A>AAvA^A<vA>^AA<A>A<v<A>A>^AAAvA<^A>A 64
-
-
 */
