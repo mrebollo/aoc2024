@@ -2,7 +2,6 @@
 advent of code day 6 (2)
 calculate the possible positions for an obstacle
 that forces the robot to get stuck on a loop
-use a 3D matrix to represent the directions as layers
 */
 
 
@@ -14,28 +13,29 @@ use a 3D matrix to represent the directions as layers
 using namespace std;
 
 struct pos{
-	int r, c, h;
+	int x, y, h;
 };
 
+vector<vector<int> > visited;
 
 //up, right, down, left
+#define WALL 0b10000
 enum dir {UP, RG, DW, LF}; 
 int dr[4] = {-1, 0, 1, 0}; 
 int dc[4] = {0, 1, 0, -1};
+char symbol[] = {'.','^','>','+','v','$','+','7','<','+','=','11','+'};
 
 //loads the map into a string vector
-vector<vector<string> > load(string filename){
-	vector<vector<string> > map(4);
+vector<string> load(string filename){
+	vector<string> map;
     fstream inputf(filename);
     string line;
     while(getline(inputf, line)){
-		for(int dir = 0; dir < 4; dir++)
-        	map[dir].push_back(line);
+        map.push_back(line);
     }
     inputf.close();
     return map;
 }
-
 
 //finds the initial position marked with ^
 void findStart(vector<string> &map, int&x, int &y){
@@ -53,14 +53,14 @@ inline void turn(int &head){
 }
 
 //check if (r,c) coordinates are inside the map
-inline int inside(vector<vector<string> > &map, int r, int c){
-	return r >=0 && r < map[0].size() && c >= 0 && c < map[0].size();
+inline int inside(vector<string> &map, int r, int c){
+	return r >=0 && r < map.size() && c >= 0 && c < map.size();
 }
 
 // returns the element in the next cell ahead, '.' if in border
-char ahead(vector<vector<string> >&map, int r, int c, int h){
+char ahead(vector<string> &map, int r, int c, int h){
 	if(inside(map, r+dr[h], c+dc[h]))
-		return map[0][r+dr[h]][c+dc[h]];
+		return map[r+dr[h]][c+dc[h]];
 	return '.';
 	//return inside(map, r, c) ? map[r+dr[h], c+dc[h]] : '.';
 }
@@ -74,18 +74,26 @@ inline void next(int &r, int &c, int h){
 
 //moves through the map until it moves away 
 // using final recursion scheme
-void move(vector<vector<string> > &map, int r, int c, int h, int &steps, vector<pos> &path){
+void move(vector<string> &map, int r, int c, int h, int &steps, vector<pos> &path){
 	//it moves away, terminates
 	if(!inside(map, r, c))
 		return;
-	//mark and count visited 
-	if(map[h][r][c] != '#'){
-		pos p = {r,c,h};
-		path.push_back(p);
+	/* include already visited in the path
+	//saves visited in the path
+	if (map[r][c] != '#'){
+			pos p = {r, c, h};
+			path.push_back(p);
 	}
-	map[h][r][c] = 'x';
-	steps++;
-
+	*/
+	//mark and count visited
+	if(map[r][c] != 'x'){
+		//saves visited in the path
+		pos p = {r,c, h};
+		path.push_back(p);
+		//mark de cell as visited
+		map[r][c] = 'x';
+		steps++;
+	}
 	//turn when collision
 	if(ahead(map, r, c, h) == '#')
 		turn(h);
@@ -94,60 +102,87 @@ void move(vector<vector<string> > &map, int r, int c, int h, int &steps, vector<
 	move(map, r, c, h, steps, path);
 }
 
-void print(vector<string> &map, vector<pos> &path){
-	//load the map empty
-	vector<string> m = map;
-	//draw the path
-	for(pos step : path)
-		m[step.r][step.c] = 'x';
-	//
-	for(int i = 0; i < m.size(); i++)
-		cout << m[i] << endl;
+void print(vector<string> &map){
+	for(int i = 0; i < map.size(); i++)
+		cout << to_string(i) << ":\t" << map[i] << endl;
+}
+
+void print_visited(pos obs){
+	for(int i = 0; i < visited.size(); i++){
+		cout << to_string(i) << ":\t";
+		for(int j = 0; j < visited[i].size(); j++)
+			if( i == obs.x && j == obs.y)
+				cout << "O";
+			else if(visited[i][j] == WALL)
+				cout << "#";
+			else
+				cout << symbol[visited[i][j]];
+		cout << endl;
+	}
+}
+void init_visited(vector<string> &map){
+	visited.resize(map.size());
+	for(int i = 0; i < map.size(); i++){
+		visited[i].resize(map.size(), 0);
+		for(int j = 0; j < map.size(); j++)
+			if(map[i][j] != '#' && map[i][j] != 'H')
+				visited[i][j] = 0;
+			else
+				visited[i][j] = WALL;
+	}
 }
 
 
 //the path from current position generates a loop
-bool is_loop(vector<vector<string> >&map, vector<pos> &path, pos p, pos obs){
-	if(!inside(map, p.r, p.c))
+bool is_loop(vector<string> &map, vector<pos> &path, pos p, pos obs){
+	if(!inside(map, p.x, p.y))
 		return false;
-	if(ahead(map, p.r, p.c, p.h) == 'O' || map[p.h][p.r][p.c] == 'x')
-		//hits the obstacle twice or it's a revisited cell -> loop
+	//hits the obstacle twice -> loop
+	/*
+	puedo chocar desde otra dirección -> no es ciert
+	if(ahead(map, p.x, p.y, p.h) == 'O')
 		return true;
-	if(ahead(map, p.r, p.c, p.h) == 'H'){
+	*/
+	//detect loop using a bitmask with heading -> loop
+	if(visited[p.x][p.y] & (1 << p.h))
+		return true;
+	//mark as visited
+	visited[p.x][p.y] |= (1 << p.h);
+	if(ahead(map, p.x, p.y, p.h) == 'H'){
 		//hits the obstacle once
-		for(int d = 0; d < 4; d++)
-			map[d][p.r+dr[p.h]][p.c+dc[p.h]] = 'O';
+		map[p.x+dr[p.h]][p.y+dc[p.h]] = 'O';
  		turn(p.h);
 	}
-	//mark visited
-	map[p.h][p.r][p.c] = 'x';
+
 	//turn when collision
-	if(ahead(map, p.r, p.c, p.h) == '#')
+	if(ahead(map, p.x, p.y, p.h) == '#')
 		turn(p.h);
-	//moves to the next cell following the current direction
-	next(p.r, p.c, p.h);
+	else
+		//moves to the next cell following the current direction
+		next(p.x, p.y, p.h);
 	return is_loop(map, path, p, obs);
 }
 
 //check if obstacle in candidate position generates loop
-// it works over its own map copy
-bool create_loop(vector<vector<string> > map, vector<pos> &path, int obsid){
+bool create_loop(vector<string> &map, vector<pos> &path, int obsid){
 	bool res = false;
 	pos obs = path[obsid];
-	pos start = path[obsid-1];
+	pos start = path[0];
+	init_visited(map);
 	//puts an obstacle in obs
-	for(int d = 0; d < 4; d++)
-		map[d][obs.r][obs.c] = 'H';
+	map[obs.x][obs.y] = 'H';
+	visited[obs.x][obs.y] = WALL;
 	//begins at previous position
-	int r = start.r, c = start.c, h = start.h;
+	//int r = start.x, c = start.y, h = start.h;
 	//moves until it moves away or loop detected
 	if(is_loop(map, path, start, obs)){
-		//print(map[0], path); cout << endl;
+		//print(map);
+		//print_visited(path[obsid]);
 		res = true;
 	}
 	//restores the map
-	for(int d = 0; d < 4; d++)
-		map[d][obs.r][obs.c] = '.';
+	map[obs.x][obs.y] = 'x';
+	visited.clear();
 	return res;
 
 }
@@ -155,35 +190,29 @@ bool create_loop(vector<vector<string> > map, vector<pos> &path, int obsid){
 
 //count possible coordinates for obstacles
 // that force the robot to get stuck on a loop
-int add_obstacles(vector<vector<string> > &map, vector<pos> &path){
+int add_obstacles(vector<string> &map, vector<pos> &path){
 	int obstacles = 0;
-	for(int i = 1; i < path.size(); i++){
-		//cout << "Obs " << i << endl;
+	for(int i = 0; i < path.size(); i++)
 		//puts an obstacle in position i, robot in i-1
 		//and checks if it generates a loop
 		//(not needed cover path from initial position)
 		if(create_loop(map, path, i)){
-			cout << "Obs " << i << " generates loop" << endl;
+			cout << "loop in: " << i << endl;
 			obstacles++;
 		}
-	}
 	return obstacles;
 }
 
 
 int main(){
-	vector<vector<string> > map;
+	vector<string> map;
 	vector<pos> path;
-	int row, col, cells = 0, head = UP;
-	string filename = "input.txt";
-	map = load(filename);
-	findStart(map[0], row, col);
-	move(map, row, col, head, cells, path);
-//	print(map[0], path);
-	int obstacles;
-	map.clear();
-	map = load(filename);
-	obstacles = add_obstacles(map, path);
+	int x, y, cells = 0, head = UP;
+	map = load("input.txt");
+	findStart(map, x, y);
+	move(map, x, y, head, cells, path);
+	//print(map);
+	int obstacles = add_obstacles(map, path);
 	cout << "obs: " << obstacles << endl;
 
 }

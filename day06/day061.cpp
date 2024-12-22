@@ -88,7 +88,7 @@ void print(vector<string> &map){
 int main(){
 	vector<string> map;
 	int x, y, cells = 0, head = UP;
-	map = load("input.txt");
+	map = load("test.txt");
 	findStart(map, x, y);
 	move(map, x, y, head, cells);
 	print(map);
