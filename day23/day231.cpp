@@ -54,7 +54,7 @@ class Network{
         }
     public:
         //TODO: dynamic allocation
-        Network(){nnodes = 0; A.resize(50, vector<int>(50, 0)); index.resize(50);};
+        Network(){nnodes = 0;};
         void load_nodes(string filename);
         void print();
         int clustering(Node u);
@@ -75,11 +75,15 @@ void Network::load_nodes(string filename){
         int uid = node_lst.insert(u);
         int vid = node_lst.insert(v);
         //insert the nodes in the index (for fast access)
+        nnodes = node_lst.size();
+        index.resize(nnodes+1);
         index[uid] = u;
         index[vid] = v;
         //insert the edge in the adjacency matrix
+        A.resize(nnodes);
+        for(int i = 0; i < nnodes; i++)
+            A[i].resize(nnodes, 0);
         A[uid][vid] = 1;  A[vid][uid] = 1;
-        nnodes = node_lst.size();
     }
     inputf.close();
 }
@@ -135,7 +139,7 @@ int count_triangles(Network& nx){
 
 int main() {
     Network nx;
-    nx.load_nodes("test.txt");
+    nx.load_nodes("input.txt");
     nx.print();
     int triangles = count_triangles(nx);
     cout << "Triangles: " << triangles << endl;
