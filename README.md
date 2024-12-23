@@ -27,24 +27,24 @@ Day 11. Expand array of digits. Dynamic programming approach
 
 Day 12. Identify blocks of consecutive letters in a grid (garden plots). Calculate area and perimeter
 
-Day 12.
+Day 13. Claw machine. Combination with lower cost
 
-Day 13.
+Day 14. POsition o a robot in agrid after t iterations
 
-Day 14.
+Day 15. Movements in a grid pushing boxes
 
-Day 15.
+Day 16. Lower cost path in a laberynth
 
-Day 16.
+Day 17. 3-bit computer. Create a compilator
 
-Day 17.
+Day 18. Shortest path in a laberynth
 
-Day 18. 
+Day 19. Identofy valid patterns with combination of strips
 
-Day 19.
+Day 20. Shortest path in a laberynth removing walls
 
-Day 20.
+Day 21. Remotelly marking code a pad
 
-Day 21.
+Day 22. Password generation applying operations
 
-Da
+Day 23. Check computers connected together. Clust. coefficient in networks
