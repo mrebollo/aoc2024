@@ -1,8 +1,11 @@
 /*
-    advent of code 23 (1)
+    advent of code 23 (2)
     Count computers begining from with 't' that appears in a triade
 
-    Local clustering coefficient
+    largest clique
+    known algorithm : Tarjan & Trojanowski (1977) 
+    idea: sort by degree and remove nodes with lower degree
+    until the graph is a clique
 */
 
 #include <iostream>
@@ -15,8 +18,18 @@ using namespace std;
 struct Node{
     string name;
     int id;
-    Node (string n, int i): name(n), id(i) {};
+    int deg; //degree
+    //nodes inserted from edges -> degree 1
+    Node (string n, int i, int deg = 1): name(n), id(i) {};
 };
+
+void println(string comment, vector<string> s){ 
+    cout << comment << ": ";
+    for(string x : s) 
+        cout << x << " ";
+    cout << endl;
+}
+
 
 // hash table with chaining for conflict resolution
 // not needed: only for names beginning with 't'
@@ -30,8 +43,11 @@ class Hash{
             int key = name[0] - 'a';
             //check if the value is already in the table
             for(Node v: table[key]){
-                if(v.name == name)
+                if(v.name == name){
+                    //try to insert means new edge -> increase degree
+                    v.deg++;
                     return v.id;
+                }
             }
             //insert if new node
             table[key].push_back(Node(name, nnodes++));
@@ -47,17 +63,12 @@ class Network{
         vector<vector<int> > A; //adjacency matrix
         int nnodes;
         vector<string> index;
-        int nodeid(string node){
-            return node[0] - 'a';
-        }
-        string nodename (int id){
-            return string(1, id + 'a');
-        }
     public:
         Network(){nnodes = 0;};
         void load_nodes(string filename);
         void print();
         int clustering(Node u);
+        vector<string> clique();
         inline vector<Node>& get_all(char c){ return node_lst.get_all(c); }
 };
 
@@ -140,11 +151,31 @@ int count_triangles(Network& nx){
 }
 
 
+// obtain the largest clique
+vector<string> Network::clique(){
+    //sort by degree
+    vector<Node> nodes;
+    for(int i = 0; i < nnodes; i++)
+        nodes.push_back(Node(index[i], i));
+    //lambda function to sort by degree
+    sort(nodes.begin(), nodes.end(), [](Node a, Node b){ return a.deg > b.deg; });
+    //remove nodes with lower degree
+    
+    return vector<string>();
+}
+
+
 int main() {
     Network nx;
-    nx.load_nodes("input.txt");
+    nx.load_nodes("test.txt");
     nx.print();
-    int triangles = count_triangles(nx);
-    cout << "Triangles: " << triangles << endl;
+    //obtain the larges clique
+    vector<string> clq = nx.clique();
+    //short alphabetically for the solution
+    sort(clq.begin(), clq.end());
+    cout << "Clique: " << endl;
+    for(string node : clq)
+        cout << node << ",";
+    cout << endl;
     return 0;
 }
