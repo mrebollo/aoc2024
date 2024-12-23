@@ -33,14 +33,13 @@ struct lower_cost{
 class Laberynth{
     private:    
         vector<string> map;
-        vector<vector<int> > M; //memoization
         size_t size;
     public:
         Laberynth(string filename, int size, int corrupted);
         void print(cell *mark);
         int solve();
     private:
-        cell shortest_path(int row, int col);
+        int shortest_path(vector<vector<int> >& M, int row, int col);
         inline bool inside(int row, int col){
             return row >= 0 && row < size && col >= 0 && col < size;
         }
@@ -58,16 +57,13 @@ Laberynth::Laberynth(string filename, int size, int corrupted) {
     int row, col;
     //initialize map and memoization matrix
     map.resize(size);
-    M.resize(size);
     for ( int i = 0 ; i < size ; i++ ){
-        M[i].resize(size, 0);
         map[i].resize(size, '.');
     }
     //load matrix
     for(int i = 0; i < corrupted; i++){
         getline(inputf, line);
         sscanf(line.c_str(), "%d,%d", &col, &row);
-        M[row][col] = '-1';
         map[row][col] = '#';
     }
     inputf.close();
@@ -96,70 +92,41 @@ void Laberynth::add_path(cell top, cell bottom){
 }
 
 
-// the cell is in plain area if there is no corrupted cells (walls) around
-bool Laberynth::in_plain(int row, int col){
-    // check straight directions
+
+//shortest path using BFS. Exit when arrives to the plain
+int Laberynth::shortest_path(vector<vector<int> >& M, int row, int col){
+    int len;
+    if(row == 0 && col == 0) 
+        return 0;
+    map[row][col] = 'o';
+    int min_len = 9999;
     for(int i = 0; i < 4; i++){
         int r = row + dr[i];
         int c = col + dc[i];
-        int r2 = row + 2*dr[i];
-        int c2 = col + 2*dc[i];
-        if(!inside(r,c) || map[r][c] == '#' || !inside(r2,c2) || map[r2][c2] == '#') 
-            return false;
-    }
-    // check diagonals
-    for(int i = 0; i < 4; i++){
-        int r = row + diagr[i];
-        int c = col + diagc[i];
-        int r2 = row + 2*diagr[i];
-        int c2 = col + 2*diagc[i];
-        if(!inside(r,c) || map[r][c] == '#' || !inside(r2,c2) || map[r2][c2] == '#') 
-            return false;
-    }
-    return true;
-}
-
-
-//shortest path using BFS. Exit when arrives to the plain
-cell Laberynth::shortest_path(int row, int col){
-    priority_queue<cell, vector<cell>, lower_cost> q;
-    q.push(cell(row, col,0));
-    while(!q.empty()){
-        //print();
-        int row = q.top().row;
-        int col = q.top().col;
-        int level = q.top().level;
-        q.pop();
-        map[row][col] = 'o';
-        if(in_plain(row, col)) return cell(row, col, level);
-        for(int i = 0; i < 4; i++){
-            int r = row + dr[i];
-            int c = col + dc[i];
-            if(inside(r,c) && map[r][c] == '.'){
-                q.push(cell(r, c, level+1));
-            }
+        if(inside(r,c) && map[r][c] == '.' && M[r][c] == 'x'){
+            len = min(len, shortest_path(M, r, c) + 1);
         }
     }
-    return cell(-1, -1, -1);
+    map[row][col] = 'x';
+    if(len < min_len)
+        return len;
+    return 9999;
 }
 
+
 int Laberynth::solve(){
+    vector<vector<int> > M(size, vector<int>(size, 0));
     print();
-    cell top = shortest_path(0, 0);
-    print(&top);
-    cell bottom = shortest_path(size-1, size-1);
-    print(&bottom);
-    add_path(top, bottom);
+    int len = shortest_path(M, size-1, size-1);
     print();
-    int len = top.level + bottom.level + manhattan(top, bottom);
     cout << "shortest path: " << len << endl;
     return 0;
 }
 
 
 int main() {
-    Laberynth lab("input.txt", 71, 1024);
-    //Laberynth lab("test.txt", 7, 12);
+    //Laberynth lab("input.txt", 71, 1024);
+    Laberynth lab("test.txt", 7, 12);
     lab.solve();
     return 0;
 }

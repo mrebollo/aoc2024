@@ -83,22 +83,23 @@ void Laberynth::findStart(vector<string> map, pair<int, int> &start, pair<int, i
 //shortest path using BFS. Exit when arrives to the plain
 cell Laberynth::shortest_path(pair<int, int> &start, pair<int, int> &endl){
     pair<int, int> pos = start;
+    map[pos.first][pos.second] = '0';
+    add_to_path(cell(pos.first, pos.second, 0));
     int row, col, level = 0;
     while(pos != endl){ 
         row = pos.first;
         col = pos.second;
-        map[row][col] = 'o';
-        add_to_path(cell(row, col, level));
         for(int i = 0; i < 4; i++){
             int r = row + dr[i];
             int c = col + dc[i];
             if(map[r][c] == '.' || map[r][c] == 'E'){
                 pos = make_pair(r, c);
                 level++;
+                map[r][c] = level % 10 + '0';
+                add_to_path(cell(r, c, level));
             }
         }
     }
-    map[row][col] = 'o';
     return cell(row, col, level);
 }
 
@@ -106,13 +107,13 @@ cell Laberynth::shortest_path(pair<int, int> &start, pair<int, int> &endl){
 
 // obtain the savings of removing all possible walls
 vector<int> Laberynth::savings(){
-    vector<int> pico(100, 0);
+    vector<int> pico(9999, 0);
     for(int i = 0; i < path.size(); i++){
         for(int j = i+1; j < path.size(); j++){
             int dist = manhattan(path[i], path[j]);
             int realdist = abs(path[i].level - path[j].level);
             if(dist < realdist && dist <= MAXDIST)
-                pico[realdist-2]++;
+                pico[realdist-dist ]++;
         }
     }
     return pico;
@@ -128,7 +129,7 @@ int Laberynth::solve(){
     cout << "shortest path: " << sol.level << endl;
     vector<int> pico = savings();
     int total = 0;
-    for(int i = 50; i < pico.size(); i++){
+    for(int i = 100; i < pico.size(); i++){
         if(pico[i] == 0) continue;
         cout << i << " picoseconds: " << pico[i] << endl;
         total += pico[i];
@@ -138,7 +139,7 @@ int Laberynth::solve(){
 
 
 int main() {
-    Laberynth lab("test.txt");
+    Laberynth lab("input.txt");
     lab.print();    
     int total = lab.solve();
     cout << "total: " << total << endl;
