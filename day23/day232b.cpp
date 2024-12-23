@@ -6,6 +6,13 @@
     known algorithm : Tarjan & Trojanowski (1977) 
     idea: sort by degree and remove nodes with lower degree
     until the graph is a clique
+    
+    Implementd from a adjacency list using a map
+    add a self loop to each node to simplify the algorithm
+    take node i
+    check if all their neighbors have the same adjacency list
+    filter: just nodes with the same degree
+
 */
 
 #include <iostream>
@@ -14,7 +21,8 @@
 #include <sstream>
 #include <vector>
 #include <algorithm>
-
+#include <set>
+#include <map>
 //#include <boost/graph/undirected_graph.hpp>
 //#include <boost/graph/bron_kerbosch_all_cliques.hpp>
 //#include "helper.hpp"
@@ -67,15 +75,17 @@ class Network{
     private:
         Hash node_lst;
         vector<vector<int> > A; //adjacency matrix
+        map<string, set<string> > adj_list; //adjacency list directly with labels
         int nnodes;
         vector<string> index;
         int clique_count();
+        void adj2list();
     public:
         Network(){nnodes = 0;};
         void load_nodes(string filename);
         void print();
         int clustering(Node u);
-        vector<string> clique();
+        set<string> clique();
         inline vector<Node>& get_all(char c){ return node_lst.get_all(c); }
 };
 
@@ -171,22 +181,47 @@ int Network::clique_count(){
     return nnodes * (nnodes - 1) / 2 - edges + 1;
 }
 
+//convert the adjacency matrix to a list
+void Network::adj2list(){
+    for(int i = 0; i < nnodes; i++){
+        set<string> adj;
+        for(int j = 0; j < nnodes; j++)
+            if(A[i][j] == 1)
+                adj.insert(index[j]);
+        adj_list[index[i]] = adj;
+    }
+}
+
 
 // obtain the largest clique
-vector<string> Network::clique(){
-    int ncliques = clique_count();
-    cout << "Number of cliques: " << ncliques << endl;
-    //sort by degree
-    vector<Node> nodes;
-    for(int i = 0; i < nnodes; i++)
-        nodes.push_back(Node(index[i], i));
-    //lambda function to sort by degree
-    sort(nodes.begin(), nodes.end(), [](Node a, Node b){ return a.deg > b.deg; });
-    for(Node n : nodes)
-        cout << n.name << " - " << n.deg << endl;
-    //remove nodes with lower degree
-    
-    return vector<string>();
+set<string> Network::clique(){
+    int clqsize = 0;
+    set<string> clq;
+    adj2list();
+    //add loop
+    for(int i = 0; i < nnodes; i++){
+        adj_list[index[i]].insert(index[i]);
+        A[i][i] = 1;
+    }
+    //compares each adjacency list (if equal, from clique)
+    for(const auto &node : adj_list ){
+        bool all_same = true;
+        set<string> neig = node.second;
+        set<string>::iterator itr;
+        for (itr = neig.begin(); itr != neig.end(); itr++){
+            if(node.second != adj_list[*itr]){
+                all_same = false;
+                break;
+            }
+        }
+        //if all the same (is a clique) and larger than the current clique, save it
+        if(all_same and neig.size() > clqsize){
+            clqsize = neig.size();
+            clq = neig;
+        }
+    }
+
+    return clq;
 }
 
 
@@ -195,9 +230,9 @@ int main() {
     nx.load_nodes("test.txt");
     nx.print();
     //obtain the larges clique
-    vector<string> clq = nx.clique();
+    set<string> clq = nx.clique();
     //short alphabetically for the solution
-    sort(clq.begin(), clq.end());
+    //sort(clq.begin(), clq.end());
     cout << "Clique: " << endl;
     for(string node : clq)
         cout << node << ",";
