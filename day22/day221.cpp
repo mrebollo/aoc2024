@@ -23,6 +23,7 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <numeric>
 using namespace std;
 
 
@@ -31,12 +32,9 @@ inline long long prune(long long code){ return code % 16777216; }
 
 
 long long new_password(long long secret){
-    long long mul = 64;
-    long long div = 32;
-    long long mul2 = 2048;
-    int next = prune(mix(secret, secret * mul));
-    next = prune(mix(next, next / div));
-    next = prune(mix(next, next * mul2));
+    int next = prune(mix(secret, secret * 64));
+    next = prune(mix(next, next / 32));
+    next = prune(mix(next, next * 2048));
     return next;
 }
 
@@ -44,22 +42,18 @@ long long new_password(long long secret){
 int main(){
 
     long long pass, sum = 0;
+    int nbuyers = 0;
+    vector<int> price, diff;
+    vector<vector<int> > market;
 
     ifstream inputf("input.txt");
     string line;
     while(getline(inputf, line)){
         pass = stoll(line);
-        for(int i = 0; i < 2000; i++){
-            //cout << pass << endl;
+        for(int i = 0; i < 2000; i++)
             pass = new_password(pass); 
-        }
-        cout << pass << endl;
         sum += pass;
-    }
+    //}
     cout << "total sum: " << sum << endl;
-
-
-
-
     return 0;
 }
