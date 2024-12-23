@@ -34,13 +34,13 @@ char dirch[] = {'^', 'v', '<', '>', ' ', ' ', ' ', ' ', ' ', 'A'};
 //    *0A
 const int distKB[11][11] = {
     {0, UP+LF, UP, UP+RG, 2*UP+LF, 2*UP, 2*UP+RG, 3*UP+LF, 3*UP, 3*UP+RG, RG}, //from 0
-    {DW+RG, 0, RG, 2*RG, UP, UP+RG, UP+2*RG, 2*UP, 2*UP+RG, 2*UP+2*RG, DW+2*RG}, //from 1
+    {RG+DW, 0, RG, 2*RG, UP, UP+RG, UP+2*RG, 2*UP, 2*UP+RG, 2*UP+2*RG, 2*RG+DW}, //from 1
     {DW, LF, 0, RG, UP+LF, UP, UP+RG, 2*UP+LF, 2*UP, 2*UP+RG, DW+RG}, //from 2
     {DW+LF, 2*LF, LF, 0, UP+2*LF, UP+LF, UP, 2*UP+2*LF, 2*UP+LF, 2*UP, DW}, //from 3
-    {2*DW+RG, DW, DW+RG, DW+2*RG, 0, RG, 2*RG, UP, UP+RG, UP+2*RG, 2*DW+2*RG}, //from 4
+    {RG+2*DW, DW, DW+RG, DW+2*RG, 0, RG, 2*RG, UP, UP+RG, UP+2*RG, 2*RG+2*DW}, //from 4
     {2*DW, DW+LF, DW, DW+RG, LF, 0, RG, UP+LF, UP, UP+RG, 2*DW+RG}, //from 5
     {2*DW+LF, DW+2*LF, DW+LF, DW, 2*LF, LF, 0, UP+2*LF, UP+LF, UP, 2*DW}, //from 6
-    {3*DW+RG, 2*DW, 2*DW+RG, 2*DW+2*RG, DW, DW+RG, DW+2*RG, 0, RG, 2*RG, 3*DW+2*RG}, //from 7
+    {RG+3*DW, 2*DW, 2*DW+RG, 2*DW+2*RG, DW, DW+RG, DW+2*RG, 0, RG, 2*RG, 2*RG+3*DW}, //from 7
     {3*DW, 2*DW+LF, 2*DW, 2*DW+RG, DW+LF, DW, DW+RG, LF, 0, RG, 3*DW+RG}, //from 8
     {3*DW+LF, 2*DW+2*LF, 2*DW+LF, 2*DW, DW+2*LF, DW+LF, DW, 2*LF, LF, 0, 3*DW}, //from 9
     {LF, UP+2*LF, UP+LF, UP, 2*UP+2*LF, 2*UP+LF, 2*UP, 3*UP+2*LF, 3*UP+LF, 3*UP, 0} //from A
@@ -51,7 +51,7 @@ const int distKB[11][11] = {
 const int distDIR[11][11] = {
     {0, DW, DW+LF, DW+RG, 0, 0, 0, 0, 0, 0, RG}, //from UP
     {UP, 0, LF, RG, 0, 0, 0, 0, 0, 0, UP+RG}, //from DW
-    {UP+RG, RG, 0, 2*RG, 0, 0, 0, 0, 0, 0, UP+2*RG}, //from LFT
+    {RG+UP, RG, 0, 2*RG, 0, 0, 0, 0, 0, 0, 2*RG+UP}, //from LFT
     {UP+LF, LF, 2*LF, 0, 0, 0, 0, 0, 0, 0, UP},  //from RGT
     {0}, {0}, {0}, {0}, {0}, {0}, //empty
     {LF, DW+LF, DW+2*LF, DW, 0, 0, 0, 0, 0, 0, 0} //from A
@@ -88,7 +88,7 @@ Keypad::Keypad(const int kb[][11], Keypad *ctrl = nullptr){
 int Keypad::dist(int from, int to){
     int bitw = kb[from][to];
     int moves = 0;
-    for(int i = 0; i < 4; i++){
+    for(int i = 4; i >= 0; i--){
         int m = (bitw >> i * 2) & 3;
         moves += m;
         for(int j = 0; j < m; j++)
@@ -108,7 +108,7 @@ int Keypad::directions(int from, int to, Keypad *controlled){
     int bitw = controlled->kb[from][to];
     int rep, moves = 0, redirect = 0;
     // for each direction
-    for(int i = 0; i < 4; i++){ 
+    for(int i = 3; i >= 0; i--){ 
         //obtain the number of repetitions
         rep = (bitw >> i * 2) & 3;
         //obtain the corresponding movements in the directional pad
@@ -169,12 +169,12 @@ int tonumber(string s){
 int main() {
     string code;
     Keypad cold(distDIR);
-    Keypad radiation(distDIR);//, &cold);
+    Keypad radiation(distDIR, &cold);
     Keypad numeric(distKB, &radiation);
     // use numeric keypad directly
     //Keypad numeric(distKB);
     
-    fstream inputf("test.txt");
+    fstream inputf("input.txt");
     int moves, complexity = 0;
     while(getline(inputf, code)){
         moves = numeric.type(code);
@@ -195,17 +195,21 @@ int main() {
 379A: ^A^^<<A>>AvvvA (14)
 
 2nd robot
-      <   A   ^ A ^^>  A  vvvA 
-      v<<A>>^A<A>AvA<^AA>A<vAAA>^A
-029A: v<<A^>>A<A>A<Av>A^Av<A^>A (28)
-980A: <A>Av<<A^>>Av<A^>AvA^A (26)
-179A: <Av<A^>>A<A>AvA^Av<A^>A (28)
-456A: <Av<A^>>AvA^AvA^Av<A^>A (28)
-
-3rd robot
+      <   A   ^ A ^^ >  A vvv  A 
+029A: v<<A^>>A<A>A<AAv>A^Av<AAA^>A (28)
+980A: <AAA>Av<<A^>>Av<AAA^>AvA^A (26)
+179A: <Av<AA^>>A<AA>AvAA^Av<AAA^>A (28)
+456A: <AAv<AA^>>AvA^AvA^Av<AA^>A (26)
+      ^ A ^^ <<  A   >> A vvv  A
+379A: <A>A<AAv<AA^>>AvAA^Av<AAA^>A (28)
+3rd robot (correcta)
 029A: <vA<AA>>^AvAA<^A>A<v<A>>^AvA^A<vA>^A<v<A>^A>AAvA^A<v<A>A>^AAAvA<^A>A 68
 980A: <v<A>>^AAAvA^A<vA<AA>>^AvAA<^A>A<v<A>A>^AAAvA<^A>A<vA>^A<A>A 60
 179A: <v<A>>^A<vA<A>>^AAvAA<^A>A<v<A>>^AAvA^A<vA>^AA<A>A<v<A>A>^AAAvA<^A>A 68
 456A: <v<A>>^AA<vA<A>>^AAvAA<^A>A<vA>^A<A>A<vA>^A<A>A<v<A>A>^AAvA<^A>A 64
+mio   <   A   > A <   AA   v  < AA   ^ >>  A v  AA  ^ A v  < AAA   ^  >  A
+      v<<A^>>AvA^Av<<A^>>AAv<A<A^>>AA<Av>AA^Av<A^>AA<A>Av<A<A^>>AAA<Av>A^A
 379A: <v<A>>^AvA^A<vA<AA>>^AAvA<^A>AAvA^A<vA>^AA<A>A<v<A>A>^AAAvA<^A>A 64
-*/
+      <   A   > A v  << AA   v < AA   ^ >>  A v  AA  ^ A v  < AAA   ^  >  A
+ 
+*/ 
