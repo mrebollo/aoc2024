@@ -59,17 +59,17 @@ bool is_valid(string s){
 void load_dictionary(string line){
     stringstream ss(line);
     string word;
-    while(getline(ss, word, ',')){
-        // remove heading blanks
-        if(word[0] == ' ')
-            word = word.substr(1);
+    while(ss >> word){
+        // remove final comma
+        if(word[word.size()-1] == ',')
+            word = word.substr(0, word.size()-1);
         strips.insert(word);
     }
 }
 
 
 int main() {
-    ifstream file("input.txt");
+    ifstream file("test.txt");
     string line;
     //read strips from file
     getline(file, line);

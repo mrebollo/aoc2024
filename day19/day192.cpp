@@ -29,6 +29,14 @@ class Hash{
             int key = c - 'a';
             return table[key];
         }
+        void show_dict(){
+            for (int i = 0; i < 26; i++){
+                cout << (char)('a' + i) << ": ";
+                for (string s: table[i])
+                    cout << s << " ";
+                cout << endl;
+            }
+        }
 };
 
 
@@ -43,7 +51,7 @@ vector<string>& obtain_prefixes(string s){
 
 //recursive function to check if a string is valid
 void is_valid(string s, int &count){
-    if(s.size() == 0)
+    if(!isalpha(s[0]))
         count++;
     vector<string>& prefixes = obtain_prefixes(s);
     for (string prefix : prefixes){
@@ -57,36 +65,40 @@ void is_valid(string s, int &count){
 void load_dictionary(string line){
     stringstream ss(line);
     string word;
-    while(getline(ss, word, ',')){
-        // remove heading blanks
-        if(word[0] == ' ')
-            word = word.substr(1);
+    while(ss >> word){
+        // remove final comma
+        if(word[word.size()-1] == ',')
+            word = word.substr(0, word.size()-1);
         strips.insert(word);
     }
+    strips.show_dict();
+
 }
 
 
 int main() {
-    ifstream file("input.txt");
+    ifstream file("test.txt");
     string line;
     //read strips from file
     getline(file, line);
+    cout << line << endl;
     load_dictionary(line);
     //blank line
     getline(file, line);
     //read and analayze combinations
     int total_valid = 0;
-    getline(file, line);
-    //while(getline(file, line)){
+    //getline(file, line);
+    while(getline(file, line)){
         int num_valid = 0;
+        cout << line;
         is_valid(line, num_valid);
         if (num_valid > 0){
             total_valid += num_valid;
-            cout << line << " is valid [" << num_valid << "]" << endl;
+            cout << " is valid [" << num_valid << "]" << endl;
         }
         else
-            cout << line << " is invalid" << endl;
-    //}
+            cout << " is invalid" << endl;
+    }
     cout << "total: " << total_valid << endl;
 
     return 0;
