@@ -61,23 +61,23 @@ const int distDIR[11][11] = {
 // 1: reversible, 2: highest bits are the valid movements (LF/RG over UP/DW)
 // TODO: change for a more intuitive meaning (ex: 0 no modif, 1, lower bits, 2 higher bits)
 const int doubKB[11][11] = {
-     {0,0,1,1,2,1,1,2,1,1,1}, 
-     {2,0,1,1,1,1,1,1,1,1,0}, 
+     {0,0,1,1,0,1,1,0,1,1,1}, 
+     {2,0,1,1,1,1,1,1,1,1,2}, 
      {1,1,0,1,1,1,1,1,1,1,1}, 
      {1,1,1,0,1,1,1,1,1,1,1}, 
-     {2,1,1,1,0,1,1,1,1,1,0}, 
+     {2,1,1,1,0,1,1,1,1,1,2}, 
      {1,1,1,1,1,0,1,1,1,1,1}, 
      {1,1,1,1,1,1,0,1,1,1,1}, 
-     {2,1,1,1,1,1,1,0,1,1,0}, 
+     {2,1,1,1,1,1,1,0,1,1,2}, 
      {1,1,1,1,1,1,1,1,0,1,1}, 
-     {1,1,1,1,1,1,1,1,1,1,1}, 
+     {1,1,1,1,1,1,1,1,1,0,1}, 
      {1,0,1,1,0,1,1,0,1,1,0}
 };
 
 const int doubDIR[11][11] = {
      {0,1,0,1,0,0,0,0,0,0,1}, 
      {1,0,1,1,0,0,0,0,0,0,1},
-     {0,1,2,1,0,0,0,0,0,0,1}, 
+     {2,1,0,1,0,0,0,0,0,0,2}, 
      {1,1,1,0,0,0,0,0,0,0,1},
      {0}, {0}, {0}, {0}, {0}, {0},
      {1,1,0,1,0,0,0,0,0,0,0}
@@ -121,16 +121,15 @@ int Keypad::dist(int from, int to){
     for(int i = 0; i < 4; i++){
         int count = ((kb[from][to] & dir[i]) >> 2*i) ; // 2 bits per direction
         // saves key pressed in the first and second place
-        if(rep.first < count){
-            rep.second = rep.first;
-            rep.first = count;
-            key.second = key.first;
-            key.first = dirout[i];
-        }
-        else if(rep.second < count){
-            rep.second = count;
-            key.second = dirout[i];
-        }
+        if(count > 0)
+            if(rep.first == 0){
+                rep.first = count;
+                key.first = dirout[i];
+            }
+            else {
+                rep.second = count;
+                key.second = dirout[i];
+            }
     }
     // FAILURE: there are non-valid trajectories removed from distKB, but appear in the bitmask
     // ex: A to 1 (UP+2LF) valid, but not 2LF+UP since there is no key under 1
@@ -214,20 +213,21 @@ int main() {
     Keypad dp(distDIR, doubDIR);
     Keypad ddp(distDIR, doubDIR);
     int total = 0;
-    fstream inputf("test.txt");
+    fstream inputf("input.txt");
     while(getline(inputf, code)){
-        string smin;
         vector<string> aux, final;
         vector<string> output = kb.type(code);
         for(string &s: output){
+            //cout << code << ": " << s << endl;
             vector<string> output2 = dp.type(s);
             aux.insert(aux.end(), output2.begin(), output2.end());
         }
         for(string &s2: aux){
+            //cout << code << ": " << s2 << endl;
             vector<string>output3 = ddp.type(s2);
             final.insert(final.end(), output3.begin(), output3.end());
         }
-        smin = *min_element(final.begin(), final.end(), str_compare);
+        string smin = *min_element(final.begin(), final.end(), str_compare);
         // does not work with lambda function insted of str_compare(??)
         cout << code << ": " << smin << " [" << smin.size() << "]" << endl;
         // remove the final 'A' to get the code
