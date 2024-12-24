@@ -155,5 +155,7 @@ v<<A^>>A<A>A<AAv>A^Av<AAA^>A: v<A<AA^>>A<Av>AA^Av<<A^>>AvA^Av<<A^>>AAv<A>A^A<A>A
 ^A^^<<A>>AvvvA: <A>A<AAv<AA^>>AvAA^Av<AAA^>A [28]
 <A>A<AAv<AA^>>AvAA^Av<AAA^>A: v<<A^>>AvA^Av<<A^>>AAv<A<A^>>AA<Av>AA^Av<A^>AA<A>Av<A<A^>>AAA<Av>A^A [68]
 can be done in 64
+<   A   > A <   AA   v  < AA   ^ >>  A v  AA  ^ A v  < AAA   ^ > A : 
+v<<A^>>AvA^Av<<A^>>AAv<A<A^>>AA<Av>AA^Av<A^>AA<A>Av<A<A^>>AAA<Av>A^A
 total moves: 127900
 */
