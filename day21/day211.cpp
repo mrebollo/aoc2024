@@ -154,6 +154,9 @@ vector<string> Keypad::type(string code){
     return typed;
 }
 
+bool str_compare(string &a, string &b) {
+    return a.size() < b.size(); 
+}
 
 int main() {
     string code;
@@ -161,7 +164,7 @@ int main() {
     Keypad dp(distDIR);
     Keypad ddp(distDIR);
     int total = 0;
-    fstream inputf("test.txt");
+    fstream inputf("input.txt");
     while(getline(inputf, code)){
         vector<string> aux, final;
         vector<string> output = kb.type(code);
@@ -185,12 +188,15 @@ int main() {
         for(string &s: final)
             cout << code << ": " << s << " [" << s.size() << "]" << endl;
         */
-        int mlen = 9999;
-        for(string &s: final){
+       // why is this not working?
+       string smin = *min_element(final.begin(), final.end(), str_compare);
+        int mlen = 9999, pos = 0;
+        for(int i = 0; i < final.size(); i++){
             //cout << s << ": " << s.size() << endl;
-            if (s.size() < mlen) mlen = s.size();
+            if (final[i].size() < mlen) {mlen = final[i].size(); pos = i;}
         }
-        cout << code << ": " << final[mlen] << " [" << final[mlen].size() << "]" << endl;
+        cout << code << ": " << smin << " [" << smin.size() << "]" << endl;
+        cout << code << ": " << final[pos] << " [" << final[pos].size() << "]" << endl;
         code.pop_back();
         total += final[mlen].size() * stoi(code);
     }
