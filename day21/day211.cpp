@@ -10,6 +10,7 @@
      <v>     
 
      Modified to obtain all combinations and choose the one with less moves
+     I've chosen a bad representation
 */
 
 #include <iostream>
@@ -33,16 +34,16 @@ using namespace std;
 //    *0A
 const int distKB[11][11] = {
     {0, UP+LF, UP, UP+RG, 2*UP+LF, 2*UP, 2*UP+RG, 3*UP+LF, 3*UP, 3*UP+RG, RG}, //from 0
-    {LF+DW, 0, RG, 2*RG, UP, UP+RG, UP+2*RG, 2*UP, 2*UP+RG, 2*UP+2*RG, 2*RG+DW}, //from 1
+    {RG+DW, 0, RG, 2*RG, UP, UP+RG, UP+2*RG, 2*UP, 2*UP+RG, 2*UP+2*RG, 2*RG+DW}, //from 1
     {DW, LF, 0, RG, UP+LF, UP, UP+RG, 2*UP+LF, 2*UP, 2*UP+RG, DW+RG}, //from 2
     {DW+LF, 2*LF, LF, 0, UP+2*LF, UP+LF, UP, 2*UP+2*LF, 2*UP+LF, 2*UP, DW}, //from 3
     {RG+2*DW, DW, DW+RG, DW+2*RG, 0, RG, 2*RG, UP, UP+RG, UP+2*RG, 2*RG+2*DW}, //from 4
     {2*DW, DW+LF, DW, DW+RG, LF, 0, RG, UP+LF, UP, UP+RG, 2*DW+RG}, //from 5
     {2*DW+LF, DW+2*LF, DW+LF, DW, 2*LF, LF, 0, UP+2*LF, UP+LF, UP, 2*DW}, //from 6
     {RG+3*DW, 2*DW, 2*DW+RG, 2*DW+2*RG, DW, DW+RG, DW+2*RG, 0, RG, 2*RG, 2*RG+3*DW}, //from 7
-    {3*DW, 2*DW+LF, 2*DW, 2*DW+RG, DW+LF, DW, DW+RG, LF, UP, RG, 3*DW+RG}, //from 8
+    {3*DW, 2*DW+LF, 2*DW, 2*DW+RG, DW+LF, DW, DW+RG, LF, 0, RG, 3*DW+RG}, //from 8
     {3*DW+LF, 2*DW+2*LF, 2*DW+LF, 2*DW, DW+2*LF, DW+LF, DW, 2*LF, LF, 0, 3*DW}, //from 9
-    {LF, UP+2*LF, UP+2*LF, UP, 2*UP+2*LF, 2*UP+LF, 2*UP, 3*UP+2*LF, 3*UP+LF, 3*UP, 0}  //from A
+    {LF, UP+2*LF, UP+LF, UP, 2*UP+2*LF, 2*UP+LF, 2*UP, 3*UP+2*LF, 3*UP+LF, 3*UP, 0}  //from A
 };
 // distance in directional pad
 //  *^A
@@ -56,27 +57,57 @@ const int distDIR[11][11] = {
     {LF, DW+LF, DW+2*LF, DW, 0, 0, 0, 0, 0, 0, 0}  //from A 
 };
 
+//reversible movements (not passing by black key [*])
+// 1: reversible, 2: highest bits are the valid movements (LF/RG over UP/DW)
+// TODO: change for a more intuitive meaning (ex: 0 no modif, 1, lower bits, 2 higher bits)
+const int doubKB[11][11] = {
+     {0,0,1,1,2,1,1,2,1,1,1}, 
+     {2,0,1,1,1,1,1,1,1,1,0}, 
+     {1,1,0,1,1,1,1,1,1,1,1}, 
+     {1,1,1,0,1,1,1,1,1,1,1}, 
+     {2,1,1,1,0,1,1,1,1,1,0}, 
+     {1,1,1,1,1,0,1,1,1,1,1}, 
+     {1,1,1,1,1,1,0,1,1,1,1}, 
+     {2,1,1,1,1,1,1,0,1,1,0}, 
+     {1,1,1,1,1,1,1,1,0,1,1}, 
+     {1,1,1,1,1,1,1,1,1,1,1}, 
+     {1,0,1,1,0,1,1,0,1,1,0}
+};
+
+const int doubDIR[11][11] = {
+     {0,1,0,1,0,0,0,0,0,0,1}, 
+     {1,0,1,1,0,0,0,0,0,0,1},
+     {0,1,2,1,0,0,0,0,0,0,1}, 
+     {1,1,1,0,0,0,0,0,0,0,1},
+     {0}, {0}, {0}, {0}, {0}, {0},
+     {1,1,0,1,0,0,0,0,0,0,0}
+};
+
+
 int dir[4] = {3, 12, 48, 192}; // 2^0, 2^2, 2^4, 2^6
 string dirout = "^v<>      A";
 
 class Keypad{
     private:
-        int kb[11][11];        
+        int kb[11][11];   
+        int db[11][11];     
         vector<string> typed;        
         int dist(int from, int to);
         int ch2pos(char c);
     public:
-        Keypad(const int kb[][11]);
+        Keypad(const int kb[][11], const int db[][11]);
         void print(){};
         void move(int dir) {};
         vector<string> type (string code);
 };
 
 
-Keypad::Keypad(const int kb[][11]){
+Keypad::Keypad(const int kb[][11], const int db[][11]){
     for(int i = 0; i < 11; i++)
-        for(int j = 0; j < 11; j++)
+        for(int j = 0; j < 11; j++){
             this->kb[i][j] = kb[i][j];
+            this->db[i][j] = db[i][j];
+        }
 
 }
 
@@ -101,16 +132,19 @@ int Keypad::dist(int from, int to){
             key.second = dirout[i];
         }
     }
+    // FAILURE: there are non-valid trajectories removed from distKB, but appear in the bitmask
+    // ex: A to 1 (UP+2LF) valid, but not 2LF+UP since there is no key under 1
+    // -> try to check and remove the invalids
     // process the keys to modify the output  
     // TODO: extract to a function
     if(rep.second == 0){
         for(string &s: typed){
-            for(int r = 0; r < rep.first; r++)
-                s += key.first;
+            s.append(rep.first, key.first);
             s += 'A';
         }
     }
-    else{
+    else if (db[from][to] == 1){
+        //all combinations are valid
         //make a copy of the existing
         vector<string> aux = typed;
         // modify existing with first key
@@ -125,6 +159,22 @@ int Keypad::dist(int from, int to){
             s.append(rep.first, key.first);
             s += 'A';
             typed.push_back(s);
+        }
+    }
+    else{
+        // only one order is valid
+        //TODO buscar la condición
+        for(string &s: typed){
+            if(db[from][to] == 2){
+                s.append(rep.second, key.second);
+                s.append(rep.first, key.first);
+                
+            }
+            else{
+                s.append(rep.first, key.first);
+                s.append(rep.second, key.second);
+            }
+            s += 'A';
         }
     }
     return 0;
@@ -160,45 +210,29 @@ bool str_compare(string &a, string &b) {
 
 int main() {
     string code;
-    Keypad kb(distKB);
-    Keypad dp(distDIR);
-    Keypad ddp(distDIR);
+    Keypad kb(distKB, doubKB);
+    Keypad dp(distDIR, doubDIR);
+    Keypad ddp(distDIR, doubDIR);
     int total = 0;
-    fstream inputf("input.txt");
+    fstream inputf("test.txt");
     while(getline(inputf, code)){
+        string smin;
         vector<string> aux, final;
         vector<string> output = kb.type(code);
-        /*
-        for(string &s: output)
-            cout << code << ": " << s << " [" << s.size() << "]" << endl;
-        */
-       for(string &s: output){
+        for(string &s: output){
             vector<string> output2 = dp.type(s);
             aux.insert(aux.end(), output2.begin(), output2.end());
         }
-        /*
-        for(string &s: aux)
-            cout << code << ": " << s << " [" << s.size() << "]" << endl;
-        */
-       for(string &s: aux){
-            vector<string> output3 = ddp.type(s);
+        for(string &s2: aux){
+            vector<string>output3 = ddp.type(s2);
             final.insert(final.end(), output3.begin(), output3.end());
         }
-        /*
-        for(string &s: final)
-            cout << code << ": " << s << " [" << s.size() << "]" << endl;
-        */
-       // why is this not working?
-       string smin = *min_element(final.begin(), final.end(), str_compare);
-        int mlen = 9999, pos = 0;
-        for(int i = 0; i < final.size(); i++){
-            //cout << s << ": " << s.size() << endl;
-            if (final[i].size() < mlen) {mlen = final[i].size(); pos = i;}
-        }
+        smin = *min_element(final.begin(), final.end(), str_compare);
+        // does not work with lambda function insted of str_compare(??)
         cout << code << ": " << smin << " [" << smin.size() << "]" << endl;
-        cout << code << ": " << final[pos] << " [" << final[pos].size() << "]" << endl;
+        // remove the final 'A' to get the code
         code.pop_back();
-        total += final[mlen].size() * stoi(code);
+        total += smin.size() * stoi(code);
     }
     inputf.close();
     cout << "total moves: " << total << endl;
