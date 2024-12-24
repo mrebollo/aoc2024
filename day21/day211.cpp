@@ -23,7 +23,6 @@ using namespace std;
 #define LF 0b00010000 //LEFT 16
 #define RG 0b01000000 //RIGHT 64
 
-
 // movements between two numbers in the keypad
 //    789
 //    456
@@ -39,7 +38,7 @@ const int distKB[11][11] = {
     {2*DW+LF, DW+2*LF, DW+LF, DW, 2*LF, LF, 0, UP+2*LF, UP+LF, UP, 2*DW}, //from 6
     {RG+3*DW, 2*DW, 2*DW+RG, 2*DW+2*RG, DW, DW+RG, DW+2*RG, 0, RG, 2*RG, 2*RG+3*DW}, //from 7
     {3*DW, 2*DW+LF, 2*DW, 2*DW+RG, DW+LF, DW, DW+RG, LF, UP, RG, 3*DW+RG}, //from 8
-    {3*DW+LF, 2*DW+2*LF, 2*DW+LF, 2*DW, 2*LF, LF, 0, UP+2*LF, UP+LF, UP, 2*DW}, //from 9
+    {3*DW+LF, 2*DW+2*LF, 2*DW+LF, 2*DW, DW+2*LF, DW+LF, DW, 2*LF, LF, 0, 3*DW}, //from 9
     {LF, UP+2*LF, UP+2*LF, UP, 2*UP+2*LF, 2*UP+LF, 2*UP, 3*UP+2*LF, 3*UP+LF, 3*UP, 0}  //from A
 };
 // distance in directional pad
@@ -48,68 +47,113 @@ const int distKB[11][11] = {
 const int distDIR[11][11] = {
     {0, DW, DW+LF, DW+RG, 0, 0, 0, 0, 0, 0, RG}, //from UP
     {UP, 0, LF, RG, 0, 0, 0, 0, 0, 0, UP+RG}, //from DW
-    {RG+UP, RG, 0, 2*RG, 0, 0, 0, 0, 0, 0, RG+UP}, //from LFT
-    {0}, {0}, {0}, {0}, {0}, {0}, {0},  //empty
-    {LF, LF+DW, DW+2*LF, DW, 0, 0, 0, 0, 0, 0, 0}  //from RGT
+    {RG+UP, RG, 0, 2*RG, 0, 0, 0, 0, 0, 0, 2*RG+UP}, //from LFT
+    {LF+UP, LF, 2*LF, 0, 0, 0, 0, 0, 0, 0, UP},  //from RGT
+    {0}, {0}, {0}, {0}, {0}, {0},
+    {LF, DW+LF, DW+2*LF, DW, 0, 0, 0, 0, 0, 0, 0}  //from A 
 };
 
-int dir[4] = {UP, DW, LF, RG};
+int dir[4] = {3, 12, 48, 192}; // 2^0, 2^2, 2^4, 2^6
+string dirout = "^v<>      A";
 
 class Keypad{
     private:
-        int kb[11][11];	
-        Keypad *control;
+        int kb[11][11];        
+        string typed;        
         int dist(int from, int to);
+        int ch2pos(char c);
     public:
-        Keypad(const int kb[][11], Keypad *ctrl = nullptr);
+        Keypad(const int kb[][11]);
         void print(){};
         void move(int dir) {};
-        int type (string code);
+        string type (string code);
 };
 
-Keypad::Keypad(const int kb[][11], Keypad *ctrl){
+
+Keypad::Keypad(const int kb[][11]){
     for(int i = 0; i < 11; i++)
         for(int j = 0; j < 11; j++)
             this->kb[i][j] = kb[i][j];
-    control = ctrl;
+
 }
 
 
 // convert bitwise keypreses to  number
 int Keypad::dist(int from, int to){
-    int press = 0;
-    for(int i = 0; i < 4; i++)
-        press += ((kb[from][to] & dir[i]) >> 2*i); // 2 bits per direction
-    return press;
+    int press = 0; int rep;
+    for(int i = 0; i < 4; i++){
+        rep = ((kb[from][to] & dir[i]) >> 2*i) ; // 2 bits per direction
+        for(int r = 0; r < rep; r++) 
+            typed += dirout[i];
+        press += rep;
+    }
+    typed += "A";
+    return ++press;
 }
 
 
-int Keypad::type(string code){
+// convert char to position in the keyboard
+int Keypad::ch2pos(char c){
+    //directional pad hasn't "5" key
+    if(kb[5][0])
+        return (c == 'A') ? A : c - '0';
+    else
+        return dirout.find(c);
+}
+
+// keys to press in the directional pad to obtain the code
+string Keypad::type(string code){
     int at = A, moves = 0, to;
+    typed.clear();
     for(char c: code){
-        // to finish goto A
-        if (c == 'A') 
-            return moves + dist(at, A);        
-        to = c - '0';
-        // movements
+        if(c == ' ') continue;
+        to = ch2pos(c);
         moves += dist(at, to);
         at = to;
     }
+    return typed;
 }
-
 
 
 int main() {
     string code;
     Keypad kb(distKB);
-    int moves, total = 0;
+    Keypad dp(distDIR);
+    Keypad ddp(distDIR);
+    int total = 0;
     fstream inputf("test.txt");
     while(getline(inputf, code)){
-        moves = kb.type(code);
-        cout << "code: " << code << " moves: " << moves << endl;
-        total += moves;
+        string output = kb.type(code);
+        cout << code << ": " << output << " [" << output.size() << "]" << endl;
+        string output2 = dp.type(output);
+        cout << output << ": " << output2 << " [" << output2.size() << "]" << endl;
+        string output3 = ddp.type(output2);
+        cout << output2 << ": " << output3 << " [" << output3.size() << "]" << endl;
+        code.pop_back();
+        total += output3.size() * stoi(code);
     }
     inputf.close();
     cout << "total moves: " << total << endl;
     return 0;
 }
+
+
+/*
+029A: <A^A^^>AvvvA [12]
+<A^A^^>AvvvA: v<<A^>>A<A>A<AAv>A^Av<AAA^>A [28]
+v<<A^>>A<A>A<AAv>A^Av<AAA^>A: v<A<AA^>>A<Av>AA^Av<<A^>>AvA^Av<<A^>>AAv<A>A^A<A>Av<A<A^>>AAA<Av>A^A [68]
+980A: ^^^A<AvvvA>A [12]
+^^^A<AvvvA>A: <AAA>Av<<A^>>Av<AAA^>AvA^A [26]
+<AAA>Av<<A^>>Av<AAA^>AvA^A: v<<A^>>AAAvA^Av<A<AA^>>A<Av>AA^Av<A<A^>>AAA<Av>A^Av<A^>A<A>A [60]
+179A: ^<<A^^A>>AvvvA [14]
+^<<A^^A>>AvvvA: <Av<AA^>>A<AA>AvAA^Av<AAA^>A [28]
+<Av<AA^>>A<AA>AvAA^Av<AAA^>A: v<<A^>>Av<A<A^>>AA<Av>AA^Av<<A^>>AAvA^Av<A^>AA<A>Av<A<A^>>AAA<Av>A^A [68]
+456A: ^^<<A>A>AvvA [12]
+^^<<A>A>AvvA: <AAv<AA^>>AvA^AvA^Av<AA^>A [26]
+<AAv<AA^>>AvA^AvA^Av<AA^>A: v<<A^>>AAv<A<A^>>AA<Av>AA^Av<A^>A<A>Av<A^>A<A>Av<A<A^>>AA<Av>A^A [64]
+379A: ^A^^<<A>>AvvvA [14]
+^A^^<<A>>AvvvA: <A>A<AAv<AA^>>AvAA^Av<AAA^>A [28]
+<A>A<AAv<AA^>>AvAA^Av<AAA^>A: v<<A^>>AvA^Av<<A^>>AAv<A<A^>>AA<Av>AA^Av<A^>AA<A>Av<A<A^>>AAA<Av>A^A [68]
+can be done in 64
+total moves: 127900
+*/
