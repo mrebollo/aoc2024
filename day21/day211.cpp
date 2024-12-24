@@ -8,12 +8,15 @@
      but marking over a directional pad
      *^A
      <v>     
+
+     Modified to obtain all combinations and choose the one with less moves
 */
 
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <vector>
+#include <algorithm>
 using namespace std;
 
 // button A is in 10th position
@@ -59,14 +62,14 @@ string dirout = "^v<>      A";
 class Keypad{
     private:
         int kb[11][11];        
-        string typed;        
+        vector<string> typed;        
         int dist(int from, int to);
         int ch2pos(char c);
     public:
         Keypad(const int kb[][11]);
         void print(){};
         void move(int dir) {};
-        string type (string code);
+        vector<string> type (string code);
 };
 
 
@@ -80,15 +83,51 @@ Keypad::Keypad(const int kb[][11]){
 
 // convert bitwise keypreses to  number
 int Keypad::dist(int from, int to){
-    int press = 0; int rep;
+    int press = 0;
+    pair<int, int> rep(0,0);
+    pair<char, char> key(' ', ' ');
+    bool once = false;
     for(int i = 0; i < 4; i++){
-        rep = ((kb[from][to] & dir[i]) >> 2*i) ; // 2 bits per direction
-        for(int r = 0; r < rep; r++) 
-            typed += dirout[i];
-        press += rep;
+        int count = ((kb[from][to] & dir[i]) >> 2*i) ; // 2 bits per direction
+        // saves key pressed in the first and second place
+        if(rep.first < count){
+            rep.second = rep.first;
+            rep.first = count;
+            key.second = key.first;
+            key.first = dirout[i];
+        }
+        else if(rep.second < count){
+            rep.second = count;
+            key.second = dirout[i];
+        }
     }
-    typed += "A";
-    return ++press;
+    // process the keys to modify the output  
+    // TODO: extract to a function
+    if(rep.second == 0){
+        for(string &s: typed){
+            for(int r = 0; r < rep.first; r++)
+                s += key.first;
+            s += 'A';
+        }
+    }
+    else{
+        //make a copy of the existing
+        vector<string> aux = typed;
+        // modify existing with first key
+        for(string &s: typed){
+            s.append(rep.first, key.first);
+            s.append(rep.second, key.second);
+            s += 'A';
+        }
+        // add copy with second key
+        for(string &s: aux){
+            s.append(rep.second, key.second);
+            s.append(rep.first, key.first);
+            s += 'A';
+            typed.push_back(s);
+        }
+    }
+    return 0;
 }
 
 
@@ -102,9 +141,10 @@ int Keypad::ch2pos(char c){
 }
 
 // keys to press in the directional pad to obtain the code
-string Keypad::type(string code){
+vector<string> Keypad::type(string code){
     int at = A, moves = 0, to;
     typed.clear();
+    typed.push_back("");
     for(char c: code){
         if(c == ' ') continue;
         to = ch2pos(c);
@@ -123,14 +163,36 @@ int main() {
     int total = 0;
     fstream inputf("test.txt");
     while(getline(inputf, code)){
-        string output = kb.type(code);
-        cout << code << ": " << output << " [" << output.size() << "]" << endl;
-        string output2 = dp.type(output);
-        cout << output << ": " << output2 << " [" << output2.size() << "]" << endl;
-        string output3 = ddp.type(output2);
-        cout << output2 << ": " << output3 << " [" << output3.size() << "]" << endl;
+        vector<string> aux, final;
+        vector<string> output = kb.type(code);
+        /*
+        for(string &s: output)
+            cout << code << ": " << s << " [" << s.size() << "]" << endl;
+        */
+       for(string &s: output){
+            vector<string> output2 = dp.type(s);
+            aux.insert(aux.end(), output2.begin(), output2.end());
+        }
+        /*
+        for(string &s: aux)
+            cout << code << ": " << s << " [" << s.size() << "]" << endl;
+        */
+       for(string &s: aux){
+            vector<string> output3 = ddp.type(s);
+            final.insert(final.end(), output3.begin(), output3.end());
+        }
+        /*
+        for(string &s: final)
+            cout << code << ": " << s << " [" << s.size() << "]" << endl;
+        */
+        int mlen = 9999;
+        for(string &s: final){
+            //cout << s << ": " << s.size() << endl;
+            if (s.size() < mlen) mlen = s.size();
+        }
+        cout << code << ": " << final[mlen] << " [" << final[mlen].size() << "]" << endl;
         code.pop_back();
-        total += output3.size() * stoi(code);
+        total += final[mlen].size() * stoi(code);
     }
     inputf.close();
     cout << "total moves: " << total << endl;
@@ -153,6 +215,9 @@ v<<A^>>A<A>A<AAv>A^Av<AAA^>A: v<A<AA^>>A<Av>AA^Av<<A^>>AvA^Av<<A^>>AAv<A>A^A<A>A
 <AAv<AA^>>AvA^AvA^Av<AA^>A: v<<A^>>AAv<A<A^>>AA<Av>AA^Av<A^>A<A>Av<A^>A<A>Av<A<A^>>AA<Av>A^A [64]
 379A: ^A^^<<A>>AvvvA [14]
 ^A^^<<A>>AvvvA: <A>A<AAv<AA^>>AvAA^Av<AAA^>A [28]
+¿can be done with less?
+^ A ^^ <<  A   >> A vvv  A
+<A>A<AAv<AA^>>AvAA^Av<AAA^>A
 <A>A<AAv<AA^>>AvAA^Av<AAA^>A: v<<A^>>AvA^Av<<A^>>AAv<A<A^>>AA<Av>AA^Av<A^>AA<A>Av<A<A^>>AAA<Av>A^A [68]
 can be done in 64
 <   A   > A <   AA   v  < AA   ^ >>  A v  AA  ^ A v  < AAA   ^ > A : 
