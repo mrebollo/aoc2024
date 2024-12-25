@@ -29,6 +29,9 @@ struct cell{
     bool operator!=(const cell &b){
         return row != b.row || col != b.col;
     }
+    bool operator==(const cell &b){
+        return row == b.row && col == b.col;
+    }
 };
 
 bool operator<(const cell &a, const cell &b){
@@ -55,7 +58,13 @@ class Laberynth{
     private:
         int shortest_path(int row, int col);
         void retrieve_path(int len);
-        bool is_connected() {return false;}
+        bool break_at(int row, int col);
+        void clean_map(){
+            for(string &s: mem)
+                for(char &c: s)
+                    if(c == 'o' || c == 'X')
+                        c = '.';
+        }
         inline bool inside(int row, int col){
             return row >= 0 && row < size && col >= 0 && col < size;
         }
@@ -97,6 +106,8 @@ void Laberynth::print(cell *mark=nullptr){
 
 //shortest path using DP beginning from both ends
 int Laberynth::shortest_path(int row, int col){
+    parent.clear();
+    path.clear();
     queue<cell> q;
     q.push(cell(row, col, 0));
     while(!q.empty()){
@@ -133,6 +144,16 @@ void Laberynth::retrieve_path(int len){
     mem[0][0] = 'X';
 }
 
+
+// trying first brute force
+bool Laberynth::break_at(int row, int col){
+    int len = shortest_path(size-1, size-1);
+    if(len == -1)
+        return true;
+    return false;
+}
+
+// add a wall to the map and try to break the path
 string Laberynth::force_failure(string filename, int corrupted){
     fstream input(filename);
     string line;
@@ -140,8 +161,12 @@ string Laberynth::force_failure(string filename, int corrupted){
     for(int i = 0; i < corrupted; i++)
         getline(input, line);
     do{
-
-    }while(is_connected());
+        getline(input, line);
+        sscanf(line.c_str(), "%d,%d", &col, &row);
+        cout << col << "," << row << " added" << endl;
+        clean_map();
+        mem[row][col] = '#';
+    }while(!break_at(row, col));    
     input.close();
     return line;
 }
@@ -159,11 +184,11 @@ int Laberynth::solve(){
 
 int main() {
     Laberynth *lab;
-    lab = new Laberynth("test.txt", 7, 12);
-    //lab = new Laberynth("input.txt", 71, 1024);
+    //lab = new Laberynth("test.txt", 7, 12);
+    lab = new Laberynth("input.txt", 71, 1024);
     lab->solve();
-    string failpos = lab->force_failure("test.txt", 13);
-    //lab->force_failure("input.txt", 1025);
+    //string failpos = lab->force_failure("test.txt", 12);
+    string failpos = lab->force_failure("input.txt", 1024);
     lab->print();
     cout << "Failure at: " << failpos << endl;
     return 0;
