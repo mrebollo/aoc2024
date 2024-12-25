@@ -2,7 +2,6 @@
 advent of code day 18 (1)
 shortest path in la laberyth (traditional way)
 
-The are two laberynths in the corners, and a plain area in between
 */
 
 #include <iostream>
@@ -12,21 +11,15 @@ The are two laberynths in the corners, and a plain area in between
 #include <vector>
 
 using namespace std;
-enum dir {UP, RG, DW, LF}; 
+//to solve backwards, better order
+enum dir {UP, LF, DW, RG}; 
 int dr[4] = {-1, 0, 1, 0}; //up, right, down, left
-int dc[4] = {0, 1, 0, -1};
-int diagr[4] = {-1, -1, 1, 1}; // nw, ne, sw, se
-int diagc[4] = {-1, 1, -1, 1};
+int dc[4] = {0, -1, 0, 1};
 
 
 struct cell{
     int row, col, level;
     cell(int r, int c, int l): row(r), col(c), level(l) {}
-};
-
-struct lower_cost{
-    bool operator()(cell& c1, cell& c2)
-    {return c1.level > c2.level && c1.row > c2.row && c1.col > c2.col;}
 };
 
 
@@ -37,9 +30,11 @@ class Laberynth{
     public:
         Laberynth(string filename, int size, int corrupted);
         void print(cell *mark);
+        void print_path();
+        void print_memo();
         int solve();
     private:
-        int shortest_path(vector<vector<int> >& M, int row, int col);
+        int shortest_path(int row, int col);
         inline bool inside(int row, int col){
             return row >= 0 && row < size && col >= 0 && col < size;
         }
@@ -59,6 +54,7 @@ Laberynth::Laberynth(string filename, int size, int corrupted) {
     map.resize(size);
     for ( int i = 0 ; i < size ; i++ ){
         map[i].resize(size, '.');
+        M.push_back(vector<int>(size, 0));
     }
     //load matrix
     for(int i = 0; i < corrupted; i++){
@@ -83,51 +79,43 @@ void Laberynth::print(cell *mark=nullptr){
 }
 
 
-// add an straight path from top to bottom 
-void Laberynth::add_path(cell top, cell bottom){
-    for(int i = top.row; i <= bottom.row; i++)
-        map[i][top.col] = 'o';
-    for(int i = top.col; i <= bottom.col; i++)
-        map[bottom.row][i] = 'o';
-}
 
-
-
-//shortest path using BFS. Exit when arrives to the plain
-int Laberynth::shortest_path(vector<vector<int> >& M, int row, int col){
-    int len;
-    if(row == 0 && col == 0) 
-        return 0;
-    map[row][col] = 'o';
-    int min_len = 9999;
-    for(int i = 0; i < 4; i++){
-        int r = row + dr[i];
-        int c = col + dc[i];
-        if(inside(r,c) && map[r][c] == '.' && M[r][c] == 'x'){
-            len = min(len, shortest_path(M, r, c) + 1);
+//shortest path using DP beginning from both ends
+int Laberynth::shortest_path(int row, int col){
+    queue<cell> q;
+    q.push(cell(row, col, 0));
+    while(!q.empty()){
+        cell top = q.front();
+        q.pop();
+        if(map[top.row][top.col] == 'o')
+            continue;
+        if(inside(top.row,top.col) && top.row == 0 && top.col == 0)
+            return top.level;
+        map[top.row][top.col] = 'o';
+        for(int i = 0; i < 4; i++){
+            int r = top.row + dr[i];
+            int c = top.col + dc[i];
+            if(inside(r,c) && map[r][c] == '.'){
+                q.push(cell(r, c, top.level+1));
+            }
         }
     }
-    map[row][col] = 'x';
-    if(len < min_len)
-        return len;
-    return 9999;
+    return -1;
 }
 
-
 int Laberynth::solve(){
-    vector<vector<int> > M(size, vector<int>(size, 0));
-    print();
     int len = shortest_path(M, size-1, size-1);
-    print();
     cout << "shortest path: " << len << endl;
     return 0;
 }
 
 
 int main() {
-    //Laberynth lab("input.txt", 71, 1024);
-    Laberynth lab("test.txt", 7, 12);
-    lab.solve();
+    Laberynth *lab;
+    //lab = new Laberynth("test.txt", 7, 12);
+    lab = new Laberynth("input.txt", 71, 1024);
+    lab->solve();
+    lab->print();
     return 0;
 }
 
