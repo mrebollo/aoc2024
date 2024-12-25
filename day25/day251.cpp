@@ -29,6 +29,18 @@ bool operator< (vector<int> &v1, vector<int> &v2){
 inline bool all_sharp(string s) {return s == "#####";}
 inline bool is_lock(string s) {return all_sharp(s);}
 
+// overload << to print a vector
+ostream& operator<<(ostream &os, vector<int> v){
+    for(int i: v) os << i << " ";
+    return os;
+}
+
+void print(set<vector<int> > scheme){
+    for(auto s : scheme)
+        cout << s << endl;
+}
+
+
 void add_lock(ifstream &file){
     vector<int> lock(5,0);
     string line;
@@ -36,7 +48,6 @@ void add_lock(ifstream &file){
         if(line.empty()) break;
         for(int i=0; i<5; i++) if(line[i] == '#') lock[i]++;
     }
-    //divide by '#' to get the heigh
     locks.insert(lock);
 }
 
@@ -44,30 +55,19 @@ void add_key(ifstream &file){
     vector<int> key(5,0);
     string line;
     while(getline(file, line)){
-        if(all_sharp(line)) break;
+        if(line.empty()) break;
         for(int i=0; i<5; i++) if(line[i] == '#') key[i]++;
     }
-    //divide by '#' to get the heigh
+    //remove last line since is a marker for end of key
+    for(int i=0; i<5; i++) key[i]--;
     keys.insert(key);
 }
 
-
-void print(vector<int> scheme){
-    for(int col: scheme) cout << col << ",";
-    cout << endl;
-}
-
-
-void print(set<vector<int> > scheme){
-    for(auto s : scheme)
-        print(s);
-}
 
 void readSchemes(string filename){
     ifstream file(filename);
     string line;
     while(getline(file, line)){
-        if(line.empty()) continue;
         if(is_lock(line))
             add_lock(file);
         else
@@ -80,8 +80,31 @@ void readSchemes(string filename){
     print(keys);
 }
 
+
+bool matches(vector<int> lock, vector<int> key){
+    for(int i=0; i<5; i++)
+        if(key[i] + lock[i] > 5) return false;
+    return true;
+}
+
+
+int match(){
+    int count = 0;
+    for(auto lock: locks){
+        for(auto key: keys){
+            if(matches(lock, key)){
+                cout << "lock " << lock << " matches key " << key << endl;  
+                count++;
+            }
+        }
+    }
+    return count;
+}
+
 int main(){
     readSchemes("input.txt");
+    int matches = match();
+    cout << "Matches: " << matches << endl;
     return 0;
 }
 
