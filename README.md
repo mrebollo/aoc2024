@@ -29,7 +29,7 @@ Day 12. Identify blocks of consecutive letters in a grid (garden plots). Calcula
 
 Day 13. Claw machine. Combination with lower cost
 
-Day 14. POsition o a robot in agrid after t iterations
+Day 14. Position o a robot in agrid after t iterations
 
 Day 15. Movements in a grid pushing boxes
 
@@ -39,7 +39,7 @@ Day 17. 3-bit computer. Create a compilator
 
 Day 18. Shortest path in a laberynth
 
-Day 19. Identofy valid patterns with combination of strips
+Day 19. Identify valid patterns with combination of strips
 
 Day 20. Shortest path in a laberynth removing walls
 
@@ -48,3 +48,7 @@ Day 21. Remotelly marking code a pad
 Day 22. Password generation applying operations
 
 Day 23. Check computers connected together. Clust. coefficient in networks
+
+Day 24. Boolean algebra: Create a digital circuit with logical gates
+
+Day 25. Match keys and locks
