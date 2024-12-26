@@ -1,7 +1,8 @@
 /*
 advent of code day 12 (1)
 garden tiling
-find contigous areas labeled with the same letter, calculate its area and perimeter
+find contigous areas labeled with the same letter
+change perimeter by number of sides of the shape
 and calculate the value (sum of area * perimeter)
 */
 
