@@ -13,7 +13,6 @@ or A / E in the extremes of the piece.
 - 3 outer neigs: 2 vertex
 - 4 outer neigs: 4 vertex
 
-
 +-+-+-+-+
 |A A A A|
 +-+-+-+-+     +-+
@@ -28,7 +27,7 @@ or A / E in the extremes of the piece.
 |E E E|
 +-+-+-+
 
-
+Adjust for the plots touching the borders: create a border of '.' around the garden
 */  
 
 
@@ -51,6 +50,8 @@ struct sizes{
 
 int dr[4] = {0,0,1,-1};
 int dc[4] = {1,-1,0,0};
+int diagr[4] = {1,1,-1,-1};
+int diagc[4] = {1,-1,1,-1};
 
 
 class Garden{
@@ -64,8 +65,8 @@ class Garden{
         int value();
     private:
         sizes plot_at(int i, int j);
-        bool is_inner(int i, int j);
-        bool is_outer(int i, int j);
+        int is_inner(int i, int j);
+        int is_outer(int i, int j);
         bool diagonal(vector<pair<int, int> > neig){
             return neig.size() == 2 && (neig[0].first - neig[1].first) * (neig[0].second - neig[1].second) != 0;
         }
@@ -82,36 +83,43 @@ bool diagonal(vector<pair<int, int> > neig){
 }
 
 // check if a cell is an outer vertex (two neighbors in the diagonal different from the current letter)
-bool Garden::is_outer(int i, int j){
+// TODO: repair
+//fails looking for inner vertex, when is a corcer between different plots
+int Garden::is_outer(int i, int j){
     char c = garden[i][j];
     // using a vector for the i,j of each neighbor
     vector<pair<int, int> > neig;
     for(int d = 0; d < 4; d++){
         int ni = i + dr[d];
         int nj = j + dc[d];
-        if(is_inside(ni, nj) && garden[ni][nj] != c)
+        if(is_inside(ni, nj) && garden[ni][nj] != c && garden[ni][nj] != '-')
             neig.push_back(make_pair(ni, nj));
     }
-    return diagonal(neig) || neig.size() >= 3;
+    // An outer vertex can have 2, 3 or 4 vertex
+    if(neig.size() == 2)
+        return diagonal(neig);
+    if(neig.size() == 4)
+        return 4;
+    if(neig.size() == 3)
+        return 2; //there is cases wioth 3. Check next exceptions
+    return 0;
 }
 
 
 // check if a cell is an inner vertex (the neighbor is outer)
-bool Garden::is_inner(int i, int j){
+// testing on corner neigbors (diagonal)
+int Garden::is_inner(int i, int j){
     char c = garden[i][j];
-    pair<int, int> neig(-1, -1);
+    int count = 0;
     for(int d = 0; d < 4; d++){
-        int ni = i + dr[d];
-        int nj = j + dc[d];
-        if(is_inside(ni, nj) && garden[ni][nj] != c)
-            if(neig.first == -1)
-                neig = make_pair(ni, nj);
-            else
-                return false;
-    }
+        int ni = i + diagr[d];
+        int nj = j + diagc[d];
+        if(is_inside(ni, nj) && garden[ni][nj] != c && garden[ni][nj] != '-')
+            count += is_outer(ni, nj );
+        }
     // arrives here if there is only one 4-neighbour
     // TODO: review formulae in the borders
-    return is_outer(neig.first, neig.second );
+    return count;
 }
 
 
@@ -120,14 +128,14 @@ sizes Garden::plot_at(int i, int j){
     sizes s = {0, 0};
     // get the plot type
     char c;
+    // 
     if( (c = garden[i][j]) == '-'){
         return s;
     }
     s.area = 1;
-    if(is_outer(i, j))
-        s.outer = 1;
-    else if(is_inner(i, j))
-        s.inner = 1;
+    // TODO: change the names of these functionss
+    s.outer = is_outer(i, j);
+    s.inner = is_inner(i, j);
     // mark the cell as visited
     garden[i][j] = '-';
     // iterate over the 4 directions
@@ -148,11 +156,16 @@ sizes Garden::plot_at(int i, int j){
 
 
 // load the garden when creates the object
+// create a border of '.' around the garden
 Garden::Garden(string filename){
     fstream input(filename);
     string line;
-    while(getline(input, line))
-        garden.push_back(line);
+    getline(input, line);
+    garden.push_back(string(line.size()+2, '.'));
+    do{
+        garden.push_back("."+line+".");
+    }while(getline(input, line));
+    garden.push_back(string(line.size()+2, '.'));
     input.close();
 }
 
@@ -167,8 +180,8 @@ void Garden::print(){
 // extract the plots (areas)
 void Garden::extract_plots(){
     // iterate over the garden
-    for(int i = 0; i < garden.size(); i++)
-        for(int j = 0; j < garden[i].size(); j++)
+    for(int i = 1; i < garden.size()-1; i++)
+        for(int j = 1; j < garden[i].size()-1; j++)
             // if it is a letter
             if(isalpha(garden[i][j])){
                 char current = garden[i][j];
