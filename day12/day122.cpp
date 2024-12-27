@@ -35,6 +35,7 @@ Adjust for the plots touching the borders: create a border of '.' around the gar
 #include <fstream>
 #include <string>
 #include <vector>
+#include <set>
 
 using namespace std;
 
@@ -67,11 +68,15 @@ class Garden{
         sizes plot_at(int i, int j);
         int is_inner(int i, int j);
         int is_outer(int i, int j);
+        bool contained(int i, int j, int ni, int nj);
         bool diagonal(vector<pair<int, int> > neig){
             return neig.size() == 2 && (neig[0].first - neig[1].first) * (neig[0].second - neig[1].second) != 0;
         }
         inline bool is_inside(int i, int j){
             return i >= 0 && i < garden.size() && j >= 0 && j < garden[i].size();
+        }
+        inline bool is_border(int i, int j){
+            return i == 0 || i == garden.size()-1 || j == 0 || j == garden[i].size()-1;
         }
 };
 
@@ -106,6 +111,20 @@ int Garden::is_outer(int i, int j){
 }
 
 
+// all neighbors of (ni,nj) are he same as (i,j)
+// configurations   CA  <-(ni,nj) 
+//         (i,j)->  CC
+// and all possible rotations
+// char can be '-' if the plot is being processed
+// TODO: replace the char '-' by the coresponding small letter?
+bool Garden::contained(int i, int j, int ni, int nj){
+    set<char> valid;
+    valid.insert(garden[i][j]);
+    valid.insert('-');    
+    return valid.count(garden[i][nj])>0 && valid.count(garden[ni][j])>0;
+}
+
+
 // check if a cell is an inner vertex (the neighbor is outer)
 // testing on corner neigbors (diagonal)
 int Garden::is_inner(int i, int j){
@@ -114,8 +133,9 @@ int Garden::is_inner(int i, int j){
     for(int d = 0; d < 4; d++){
         int ni = i + diagr[d];
         int nj = j + diagc[d];
-        if(is_inside(ni, nj) && garden[ni][nj] != c && garden[ni][nj] != '-')
-            count += is_outer(ni, nj );
+        if(is_inside(ni, nj) && garden[ni][nj] != c && garden[ni][nj] != '-' &&
+            contained(i, j, ni, nj))
+            count++;
         }
     // arrives here if there is only one 4-neighbour
     // TODO: review formulae in the borders
@@ -188,7 +208,7 @@ void Garden::extract_plots(){
                 //cout << current << " plot at " << i << ", " << j << endl;
                 sizes s = plot_at(i, j);
                 print();
-                cout << current << " Area: " << s.area << " Inner: " << s.inner << " Outer: " << s.outer << endl << endl;
+                cout << current << " Area: " << s.area << " Inner: " << s.inner << " Outer: " << s.outer << " Value: "<< s.value() << endl;
                 plot.push_back(s);
             }
 }
@@ -205,7 +225,7 @@ int Garden::value(){
 
 int main(){
     // load the garden
-    Garden g("test4.txt");
+    Garden g("input.txt");
     g.print();
     // extract the plots (areas)
     g.extract_plots();
