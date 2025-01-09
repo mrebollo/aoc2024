@@ -47,6 +47,7 @@ class Computer{
         Computer(string filename);
         void run();
         void run_backwards();
+        __int64_t search();
         void print_state();
         void print_program();
         void reset(long long a=0, long long  b=0, long long  c=0);
@@ -177,20 +178,34 @@ and find the value that matches (betweeen 0 and 7)
 */
 void Computer::run_backwards(){
     int it = 1, k;
-    __int64_t regA = 0;
-    while(output.size() < program.size() && !match()){
+    __int64_t regA[17] = {0};
+    vector<int> begin(17, 0);
+    begin[it] = 0;
+    while(output.size() <= program.size() && !match()){
         int out = program[program.size() - it];
-        for(k = 0; k < 8; k++){
-            reset(regA * 8 + k);
+        for(k = begin[it]; k < 8; k++){
+            reset(regA[it-1] * 8 + k);
             run();
             if(output.front() == out)
                 break;
         }
-        regA = regA * 8 + k;
-        cout << "iteration: " << it << " regA: " << regA << endl;
-        print_state();
-        print_program();
-        it++;
+        if(k < 8){
+            regA[it] = regA[it-1] * 8 + k;
+            cout << "iteration: " << it << " regA: " << regA[it] << endl;
+            print_state();
+            print_program();
+            begin[it++] = k;
+        }
+        else{
+            //no match, continue from last output
+            //recover regA
+            //reset k for discarted valu
+            begin[it--] = 0;
+            //explore from next k value
+            begin[it]++;
+
+  
+        }
     }
 }
 
