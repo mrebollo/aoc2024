@@ -76,45 +76,6 @@ char Laberynth::ontheright(int row, int col, int hd){
     return map[r][c];
 }
 
-/*
-int Laberynth::visitCell(int row, int col, int hd, int steps) {
-    if(steps > 60) exit(0);
-    print();
-    cout << "visiting: [" << steps << "] " << row << ", " << col << " " << head[hd] << endl;
-    if (map[row][col] == 'E') {
-        print();
-        cout << "exit in " << steps << " steps" << endl;
-        return steps;
-    }
-    // mark cell as visited and save original value
-    vector<int> dist(3, RAND_MAX);
-    char lf = ontheleft(row, col, hd);
-    char rg = ontheright(row, col, hd);
-    char ah = ahead(row, col, hd);
-    // save cell
-    //char savedtile = map[row][col];
-     map[row][col] = 'o';
-    int r, c;
-    if(ah != '#' && ah != 'o'){
-        r = row + dr[hd]; c = col + dc[hd];
-        dist[0] =  visitCell(r, c, hd, steps+1);
-    }
-    if(lf != '#' && lf != 'o'){
-        r = row + dr[turnleft[hd]]; c = col + dc[turnleft[hd]];
-        dist[1] = 1000 + visitCell(row, col, turnleft[hd], steps+1);
-    }
-    if(rg != '#' && rg != 'o'){
-        r = row + dr[turnright[hd]]; c = col + dc[turnright[hd]];
-        dist[2] = 1000 + visitCell(row, col, turnright[hd], steps+1);
-    }
-   
-     //restore cell
-    //map[row][col] = savedtile;
-    return min(dist[0], min(dist[1], dist[2]));
-
-}
-*/
-
 int Laberynth::visitCell(int srow, int scol, int hd, int steps) {
     struct cell{
         int row,col,hd,cost;
@@ -156,7 +117,6 @@ int Laberynth::visitCell(int srow, int scol, int hd, int steps) {
         }
     }
     return -1;
-
 }
 
 
