@@ -12,6 +12,7 @@ Count all possible combinations
 #include <string>
 #include <sstream>
 #include <vector>
+#include <map>
 using namespace std;
 
 
@@ -50,14 +51,20 @@ vector<string>& obtain_prefixes(string s){
 
 
 //recursive function to check if a string is valid
-void is_valid(string s, int &count){
+long count_valid(map<string, long> &M, string s){
+    if(M.find(s) != M.end()){
+        return M[s];
+    }
     if(!isalpha(s[0]))
-        count++;
+        return 1;
     vector<string>& prefixes = obtain_prefixes(s);
+    long count = 0;
     for (string prefix : prefixes){
         if(s.substr(0, prefix.size()) == prefix)
-           is_valid(s.substr(prefix.size()), count);
+           count += count_valid(M, s.substr(prefix.size()));
     }
+    M[s] = count;
+    return count;
 }
 
 
@@ -77,7 +84,7 @@ void load_dictionary(string line){
 
 
 int main() {
-    ifstream file("test.txt");
+    ifstream file("input.txt");
     string line;
     //read strips from file
     getline(file, line);
@@ -86,20 +93,23 @@ int main() {
     //blank line
     getline(file, line);
     //read and analayze combinations
-    int total_valid = 0;
+    long total_valid = 0, nvalid = 0;
     //getline(file, line);
     while(getline(file, line)){
-        int num_valid = 0;
+        map<string, long> M;
+        long num_valid = 0;
         cout << line;
-        is_valid(line, num_valid);
+        num_valid = count_valid(M, line);
         if (num_valid > 0){
             total_valid += num_valid;
             cout << " is valid [" << num_valid << "]" << endl;
+            nvalid++;
         }
         else
             cout << " is invalid" << endl;
     }
     cout << "total: " << total_valid << endl;
+    cout << "valid: " << nvalid << endl;
 
     return 0;
 }
