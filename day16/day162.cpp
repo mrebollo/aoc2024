@@ -31,7 +31,7 @@ class Laberynth{
         void print();
         int solve();
     private:
-        int shortest_path(int srow, int scol, int shead);
+        int all_paths(int srow, int scol, int shead);
         int visitCell(int row, int col, int hd, int steps);
         char ahead(int row, int col, int hd);
         char ontheleft(int row, int col, int hd);
@@ -79,44 +79,6 @@ char Laberynth::ontheright(int row, int col, int hd){
 }
 
 /*
-int Laberynth::visitCell(int row, int col, int hd, int steps) {
-    if(steps > 60) exit(0);
-    print();
-    cout << "visiting: [" << steps << "] " << row << ", " << col << " " << head[hd] << endl;
-    if (map[row][col] == 'E') {
-        print();
-        cout << "exit in " << steps << " steps" << endl;
-        return steps;
-    }
-    // mark cell as visited and save original value
-    vector<int> dist(3, RAND_MAX);
-    char lf = ontheleft(row, col, hd);
-    char rg = ontheright(row, col, hd);
-    char ah = ahead(row, col, hd);
-    // save cell
-    //char savedtile = map[row][col];
-     map[row][col] = 'o';
-    int r, c;
-    if(ah != '#' && ah != 'o'){
-        r = row + dr[hd]; c = col + dc[hd];
-        dist[0] =  visitCell(r, c, hd, steps+1);
-    }
-    if(lf != '#' && lf != 'o'){
-        r = row + dr[turnleft[hd]]; c = col + dc[turnleft[hd]];
-        dist[1] = 1000 + visitCell(row, col, turnleft[hd], steps+1);
-    }
-    if(rg != '#' && rg != 'o'){
-        r = row + dr[turnright[hd]]; c = col + dc[turnright[hd]];
-        dist[2] = 1000 + visitCell(row, col, turnright[hd], steps+1);
-    }
-   
-     //restore cell
-    //map[row][col] = savedtile;
-    return min(dist[0], min(dist[1], dist[2]));
-
-}
-*/
-
 int Laberynth::visitCell(int srow, int scol, int hd, int steps) {
     struct cell{
         int row,col,hd,cost;
@@ -160,28 +122,56 @@ int Laberynth::visitCell(int srow, int scol, int hd, int steps) {
     return -1;
 
 }
+*/
 
 
-//shortest path from 'S' to 'E' using bread first search
-int Laberynth::shortest_path(int srow, int scol, int shead){
-    queue<int> steps;
-    queue<pair<int, int> > q;
-    q.push(make_pair(srow, scol));
-    steps.push(0);
+int Laberynth::visitCell(int srow, int scol, int hd, int steps) {
+    if(map[srow][scol] == 'E') 
+        return steps;
+    
+    //ahead
+    int r = srow + dr[hd];
+    int c = scol + dc[hd];
+    if(map[r][c] == '#' || map[r][c] == 'o')
+        return 999999;
+    map[srow][scol] = 'o';
+    if(map[r][c] != '#' && map[r][c] != 'o')
+        return visitCell(r, c, hd, steps) + 1;
+    //left
+    r = srow + dr[turnleft[hd]];
+    c = scol + dc[turnleft[hd]];
+    if(map[r][c] != '#' && map[r][c] != 'o')
+        return visitCell(r, c, turnleft[hd], steps+1000) + 1000;
+    //right
+    r = srow + dr[turnright[hd]];
+    c = scol + dc[turnright[hd]];
+    if(map[r][c] != '#' && map[r][c] != 'o')
+        return visitCell(r, c, turnright[hd], steps+1000) + 1000;
+
+        
+
+}
+
+//shortest path from 'S' to 'E' using deep first search
+int Laberynth::all_paths(int srow, int scol, int shead){
+    struct cell{
+        int row, col, len;
+        cell(int r, int c, int l): row(r), col(c), len(l) {}
+    };  
+    queue<cell> q;
+    q.push(cell(srow, scol, 0));
     while(!q.empty()){
         print();
-        int row = q.front().first;
-        int col = q.front().second;
+        int row = q.front().row;
+        int col = q.front().col;
+        int level = q.front().len;
         q.pop();
-        int level = steps.front();
-        steps.pop();
         for(int i = 0; i < 4; i++){
             int r = row + dr[i];
             int c = col + dc[i];
             if(map[r][c] == 'E') return level;
             if(map[r][c] == '.'){
-                q.push(make_pair(r, c));
-                steps.push(level+1);
+                q.push(cell(r, c, level+1));
                 map[r][c] = 'o';
             }
         }
@@ -195,17 +185,19 @@ int Laberynth::solve(){
     cout << "start: " << srow << ", " << scol << " - " << shead << endl;
     map[srow][scol] = 'o';
     int len = visitCell(srow, scol, shead, 0);
+    cout << "visite cells len: " << len << endl;
+    //len = shortest_path(srow, scol, shead);
+    //cout << "shortest path: " << len << endl;
 
-    //int len = shortest_path(srow, scol, shead);
-    cout << "shortest path: " << len << endl;
     return 0;
 }
 
 
 int main() {
-    Laberynth lab("input.txt");
-    lab.print();
+    Laberynth lab("test1.txt");
     lab.solve();
+    lab.print();
+
     return 0;
 }
 
