@@ -208,8 +208,9 @@ void Garden::extract_plots(){
                 //cout << current << " plot at " << i << ", " << j << endl;
                 sizes s = plot_at(i, j);
                 print();
-                cout << current << " Area: " << s.area << " Inner: " << s.inner << " Outer: " << s.outer << " Value: "<< s.value() << endl;
+
                 plot.push_back(s);
+                cout << current << " Area: " << s.area << " Inner: " << s.inner << " Outer: " << s.outer << " Value: "<< s.value() << "\ttotal: " << value() << endl;
             }
 }
 
@@ -225,7 +226,8 @@ int Garden::value(){
 
 int main(){
     // load the garden
-    Garden g("input.txt");
+    Garden g("break.txt");
+
     g.print();
     // extract the plots (areas)
     g.extract_plots();
