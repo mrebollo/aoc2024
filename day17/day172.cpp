@@ -53,11 +53,14 @@ class Computer{
         bool match();
     private:
         vector<int> program;
-        vector<long long> registers;
+        vector<__int64_t> registers;
         vector<int> output;
+        int k[8][8];
         int ptr;
-        int get_operand(int op);
+        __int64_t get_operand(int op);
 };
+
+
 
 Computer::Computer(string filename){
     fstream inputf(filename);
@@ -66,11 +69,11 @@ Computer::Computer(string filename){
     ptr = 0;
     // read registers
     getline(inputf, line);
-    sscanf(line.c_str(), "Register A: %ld", &registers[A]);
+    sscanf(line.c_str(), "Register A: %ll", &registers[A]);
     getline(inputf, line);
-    sscanf(line.c_str(), "Register B: %ld", &registers[B]);
+    sscanf(line.c_str(), "Register B: %ll", &registers[B]);
     getline(inputf, line);
-    sscanf(line.c_str(), "Register C: %ld", &registers[C]);
+    sscanf(line.c_str(), "Register C: %ll", &registers[C]);
     // blank line
     getline(inputf, line);
     // load program
@@ -85,13 +88,15 @@ Computer::Computer(string filename){
 }
 
 
-int Computer::get_operand(int op){
+__int64_t Computer::get_operand(int op){
     return (op < 4) ? op : registers[op];
 }
 
 
+
 void Computer::run(){
-    int op, combo, literal;
+    int op, literal;
+    __int64_t combo;
     while(ptr < program.size()){
         op = program[ptr];
         literal = program[ptr+1];
@@ -134,55 +139,10 @@ void Computer::run(){
 }
 
 
-void Computer::run_backwards(){
-    int op, combo, literal;
-    ptr = 0;
-    while(ptr < program.size()){
-        op = program[ptr];
-        literal = program[ptr+1];
-        combo = get_operand(literal);
-        switch(op){
-            case adv:
-                registers[A] /= pow(2,combo);
-                break;
-            case bxl:
-                registers[B] ^= literal;
-                break;
-            case bst:
-                registers[B] = combo % 8;
-                break;
-            case jnz:
-                if(registers[A] != 0){
-                    ptr = literal;
-                    continue; // skip ptr += 2
-                }
-                break;
-            case bxc:
-                registers[B] ^= registers[C];
-                break;
-            case out:
-                output.push_back(combo % 8);
-                break;
-            case bdv:
-                registers[B] = registers[A] / pow(2,combo);
-                break;
-            case cdv:
-                registers[C] = registers[A] / pow(2,combo);
-                break;
-        }
-#ifdef _DEBUG
-        cout << "op: " << opname[op] << " literal: " << literal << " combo: " << combo << endl;
-        print_state();
-#endif
-        ptr += 2;
-    }
-}   
-
-
 void Computer::print_state(){
-    cout << "Register A: " << registers[A] << endl;
-    cout << "Register B: " << registers[B] << endl;
-    cout << "Register C: " << registers[C] << endl;
+    cout << "Register A: " << oct << registers[A] << dec << " | " << registers[A] << endl;
+    cout << "Register B: " << oct << registers[B] << dec << " | " << registers[B]  << endl;
+    cout << "Register C: " << oct << registers[C] << dec << " | " << registers[C]  << endl;
     cout << "Output: ";
     for(int out : output)
         cout << out << ",";
@@ -205,21 +165,40 @@ void Computer::reset(long long  a, long long  b, long long  c){
 }
 
 bool Computer::match(){
-    return output == program;
+    return output == program; 
 }
 
+/*
+get the values from the last output backwards.
+out operation always takes 3 less significative bits
+->
+displace 3 bits to the left (= multiply by 8) 
+and find the value that matches (betweeen 0 and 7)
+*/
+void Computer::run_backwards(){
+    int it = 1, k;
+    __int64_t regA = 0;
+    while(output.size() < program.size() && !match()){
+        int out = program[program.size() - it];
+        for(k = 0; k < 8; k++){
+            reset(regA * 8 + k);
+            run();
+            if(output.front() == out)
+                break;
+        }
+        regA = regA * 8 + k;
+        cout << "iteration: " << it << " regA: " << regA << endl;
+        print_state();
+        print_program();
+        it++;
+    }
+}
+
+
 int main(){
-    int A = 0;
     Computer cmp("input.txt");
-    //do{
-        cmp.reset(1234567890123125);
-        cmp.print_state();
-        cmp.run();
-        if( A % 1000000 == 0)
-            cout << "A: " << A << endl;
-    //}while(!cmp.match());
-    cmp.print_state();
-    cout << "match " << cmp.match() << endl;
-    cout << "register A: " << A << endl;
+    cmp.run_backwards(); 
+    //cout << "match " << cmp.match() << endl;
+    //cout << "register A: " << A << endl;
     return 0;
 }

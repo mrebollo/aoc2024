@@ -1,7 +1,7 @@
-Register A: 117440
+Register A: 0
 Register B: 0
 Register C: 0
 
 Program: 0,3,5,4,3,0
 
-#output: 0,3,5,4,3,0
+#output: 0,3,5,4,3,0 with A = 117440

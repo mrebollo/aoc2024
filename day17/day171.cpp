@@ -21,6 +21,8 @@ ptr: pointer to the current instruction
 registers: A, B, C
 output: the output of the program
 ptr += 2 after each instruction (except jnz)
+
+Check https://www.reddit.com/r/adventofcode/comments/1hgig79/2024_day_17_part_2_i_need_the_hit_me_over_the/
 */
 
 #include <iostream>
@@ -31,7 +33,7 @@ ptr += 2 after each instruction (except jnz)
 
 using namespace std;
 
-//#define _DEBUG 0
+#define _DEBUG 0
 
 
 class Computer{
@@ -128,9 +130,9 @@ void Computer::run(){
 
 
 void Computer::print_state(){
-    cout << "Register A: " << registers[A] << endl;
-    cout << "Register B: " << registers[B] << endl;
-    cout << "Register C: " << registers[C] << endl;
+    cout << "Register A: " << oct << registers[A] << endl;
+    cout << "Register B: " << oct << registers[B] << endl;
+    cout << "Register C: " << oct << registers[C] << endl;
     cout << "Output: ";
     for(int out : output)
         cout << out << ",";
@@ -146,7 +148,7 @@ void Computer::print_program(){
 
 
 int main(){
-    Computer cmp("input.txt");
+    Computer cmp("debug.txt");
     cmp.print_state();
     cmp.print_program();
     cmp.run();
