@@ -58,6 +58,7 @@ int main(){
 
     ifstream inputf("input.txt");
     string line;
+    int it = 0, total = 0;
     while(getline(inputf, line)){
         map<vector<int>, int> gain;
         vector<int> prices;
@@ -75,10 +76,16 @@ int main(){
         adjacent_difference(prices.begin(), prices.end(), diff.begin());
 
         //get the gain for all the sequences backwards
-        for(int i = diff.size()-1; i > 3; i--){
+        for(int i = diff.size()-1; i > 2; i--){
             vector<int> seq = vector<int>(diff.begin() + i-3, diff.begin()+i+1);
             gain[seq] = prices[i];
+            //cout << i << ": "; print(seq);
         }
+        //check best seq -1 0 1 0 
+        int aux[4] = {-1, 0, 1, 0};
+        vector<int> bestseq(aux, aux + 4);
+        total += gain[bestseq];
+        cout << it++ << " gain: " << gain[bestseq] << " total: " << total << " | "; print(bestseq);
 
         //accumulate the gain for all the sequences in global
         for(auto &g: gain){
@@ -92,6 +99,12 @@ int main(){
  
     }
     auto best = *max_element(global.begin(), global.end(), gain_compare);
+/*     for(auto &g: global){
+        cout << g.second << " | " << "seq: "; print(g.first);
+        if(g.second >= best.second){
+            cout << "---> best: "; print(g.first);
+        }
+    } */
     cout << "seq: "; print(best.first);
     cout << "gain: " << best.second << endl; 
     return 0;
