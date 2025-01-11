@@ -16,6 +16,8 @@
 #include <string>
 #include <vector>
 #include <numeric>
+#include <algorithm>
+#include <map>
 using namespace std;
 
 struct seq{
@@ -43,92 +45,54 @@ void print(vector<int> v){
 }
 
 
-void four_changes(vector<int> v, vector<seq> &allseqs){
-    seq s;
-    // begin at 1 since 0 contains no difference but value
-    for(int i = 1; i < v.size()-3; i++){
-        if(v[i] != 0 && v[i+1] != 0 && v[i+2] != 0 && v[i+3] != 0){
-            s.values = vector<int>(v.begin() + i, v.begin() + i+4);
-            s.idx = i;
-            allseqs.push_back(s);
-        }
-    }
-}
-
-// a seq is valid if its msx appears before in the complete sequence
-// or if it is the last value in the sequence
-bool is_valid(seq s, vector<int> price){
-    int mx = *max_element(s.values.begin(), s.values.end());
-    // if it is the last
-    if(mx == s.values[3])
-        return true;
-    // if mx appears before in the sequence
-    auto it = find(price.begin(), price.end(), mx);
-    return (*it < s.idx) ? true : false;
-}
-
-
-int sell_at_sequence(seq s, vector<vector<int> > &market){
-    return 0;
+bool gain_compare(const pair<vector<int>, int> &a, const pair<vector<int>, int> &b) {
+    return a.second < b.second;
 }
 
 
 int main(){
     long long pass, sum = 0;
     int nbuyers = 0;
-    vector<int> prices, diff;
-    vector<vector<int> > market;
+    //map with the gain for each sequence
+    map<vector<int>, int> global;
 
-    ifstream inputf("test.txt");
+    ifstream inputf("input.txt");
     string line;
-    //while(getline(inputf, line)){
-        getline(inputf, line);
+    while(getline(inputf, line)){
+        map<vector<int>, int> gain;
+        vector<int> prices;
         pass = stoll(line);
-        //pass = 123;
+        //generate the prices from the pass list
         prices.push_back((int)(pass % 10));
-        for(int i = 0; i < 2000; i++){
-            //cout << pass << endl;
+        for(int i = 0; i < 1999; i++){
+           //cout << pass << endl;
             pass = new_password(pass); 
             prices.push_back((int)(pass % 10)); 
         }
-        market.push_back(prices);
-        diff.resize(prices.size());
+
+        //get the difference between prices
+        vector<int> diff(prices.size());
         adjacent_difference(prices.begin(), prices.end(), diff.begin());
-        cout << "prices: "; print(prices);
-        cout << "diff: "; print(diff);
-        prices.clear();
-    //}
-    // buy orders: check all possible 4-changes sequences in first buyer    
-    vector<seq> allseqs;
-    four_changes(diff, allseqs);
-    int max = 0;
-    for(int i = 0; i < allseqs.size(); i++)
-        if(is_valid(allseqs[i], diff)){
-            int price = sell_at_sequence(allseqs[i], market);
-            if(price > max)
-                max = price;
+
+        //get the gain for all the sequences backwards
+        for(int i = diff.size()-1; i > 3; i--){
+            vector<int> seq = vector<int>(diff.begin() + i-3, diff.begin()+i+1);
+            gain[seq] = prices[i];
         }
-    cout << "max: " << max << endl;
+
+        //accumulate the gain for all the sequences in global
+        for(auto &g: gain){
+            if(global.find(g.first) == global.end())
+                global[g.first] = g.second;
+            else
+                global[g.first] += g.second;
+        }
+        //vector<int>::iterator bestprice = max_element(prices.begin(),prices.end());
+        //vector<int> bestseq = vector<int>(diff.begin() + *bestprice - 3, diff.begin() + *bestprice + 1); 
+ 
+    }
+    auto best = *max_element(global.begin(), global.end(), gain_compare);
+    cout << "seq: "; print(best.first);
+    cout << "gain: " << best.second << endl; 
     return 0;
 }
-
-
-/*
-// buy orders
-    // get first 4-changes sequence
-    vector<int> seq(4);
-    int idx = four_changes(diff, seq);
-    cout << "idx: " << idx << endl;
-    cout << "seq: "; print(seq);
-    // get highest price in the first 4-changes sequence
-    int mx = *max_element(seq.begin(), seq.end());
-    cout << "max: " << mx << endl;
-    // identify next aparition of that price
-    auto it = find(market[0].begin(), market[0].end(), mx);
-    it = find(it+1, market[0].end(), mx);
-    cout << "found at it: " << *it << endl;
-    // get the 4-changes sequence finishing at that aparition
-    vector<int> final = vector<int>(diff.begin() + *it - 3, diff.begin() + *it + 1);
-    cout << "final: "; print(final);
-    return 0;
-*/
