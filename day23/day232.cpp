@@ -6,6 +6,12 @@
     known algorithm : Tarjan & Trojanowski (1977) 
     idea: sort by degree and remove nodes with lower degree
     until the graph is a clique
+    
+    Implementd from a adjacency list using a map
+    add a self loop to each node to simplify the algorithm
+    take node i
+    - (?) check if all their neighbors have the same adjacency list (not neccesary)
+    - check the longest list of common nodes (intersection)
 */
 
 #include <iostream>
@@ -14,10 +20,9 @@
 #include <sstream>
 #include <vector>
 #include <algorithm>
+#include <unordered_set>
+#include <unordered_map>
 
-//#include <boost/graph/undirected_graph.hpp>
-//#include <boost/graph/bron_kerbosch_all_cliques.hpp>
-//#include "helper.hpp"
 
 using namespace std;
 
@@ -29,10 +34,11 @@ struct Node{
     Node (string n, int i, int deg = 1): name(n), id(i) {};
 };
 
+
 void println(string comment, vector<string> s){ 
     cout << comment << ": ";
     for(string x : s) 
-        cout << x << " ";
+        cout << x << ",";
     cout << endl;
 }
 
@@ -60,6 +66,12 @@ class Hash{
             return nnodes-1;
         }
         inline vector<Node>& get_all(char c){ return table[c - 'a']; }
+        Node& get_node(string name){
+            int i = name[0] - 'a';
+            for(Node& v: table[i])
+                if(v.name == name)
+                    return v;
+        }
         inline int size(){ return nnodes; }
 };
 
@@ -67,16 +79,16 @@ class Network{
     private:
         Hash node_lst;
         vector<vector<int> > A; //adjacency matrix
+        unordered_map<int, unordered_set<int> > adj_list; //adjacency list (map)
         int nnodes;
         vector<string> index;
-        int clique_count();
+        void adj2list();
+        vector<string>largest(vector<unordered_set<int> >& cliques);
     public:
         Network(){nnodes = 0;};
         void load_nodes(string filename);
         void print();
-        int clustering(Node u);
         vector<string> clique();
-        inline vector<Node>& get_all(char c){ return node_lst.get_all(c); }
 };
 
 
@@ -108,7 +120,7 @@ void Network::load_nodes(string filename){
 
 
 void Network::print(){
-        //heading
+    //heading
     cout << "\t";
     for(int i = 0; i < nnodes; i++)
         cout << index[i] << " ";
@@ -126,81 +138,91 @@ void Network::print(){
 }
 
 
-// local clustering coefficient Ci = 2*Ei/(ki*(ki-1)) of a node i
-// used to count triangles
-// to avoid repeat triangles with more than one 't' node
-// disconnect the node once counted (row)
-int Network::clustering(Node u){
-    int id = u.id;
-    int Ci = 0;
-    //get the neighbors of the node
-    for(int i = 0; i < nnodes; i++)
-        if(A[id][i] == 1){
-            // get "friends of my friends"
-            for(int j = i+1; j < nnodes; j++)
-                //triangle if all three connected A(x,y) == 1
-                Ci += A[id][i] * A[id][j] * A[i][j];
-            //remove just the row -> in-degree 0
-            A[i][id] = 0;
-        }
-    return Ci;
-}
 
-int count_triangles(Network& nx){
-    int triangles = 0;
-    //get nodes with name beginning with 't'
-    vector<Node> nodes = nx.get_all('t');
-    for(Node u : nodes){
-        // calculate local clustering coefficient (num triangles)
-        int Ci = nx.clustering(u);
-        cout << "Node " << u.name << " - " << Ci << " triangles" << endl;
-        triangles += Ci;
+//convert the adjacency matrix to adjacency lists
+void Network::adj2list(){
+    for(int i = 0; i < nnodes; i++){
+        unordered_set<int> adj;
+        for(int j = 0; j < nnodes; j++)
+            if(A[i][j] == 1)
+                adj.insert(j);
+        adj_list[i] = adj;
     }
-    return triangles;
 }
 
 
-//determines the number of cliques in the graph
-// Number of cliques = n * (n – 1) / 2 – m + 1 
-// where n is the number of nodes and m is the number of edges
-int Network::clique_count(){
-    int edges = 0;
-    for(int i = 0; i < nnodes; i++)
-        for(int j = i+1; j < nnodes; j++)
-            edges += A[i][j];
-    return nnodes * (nnodes - 1) / 2 - edges + 1;
+void bronKerbosch(
+    unordered_set<int>&& R, unordered_set<int>&& P,
+    unordered_set<int>&& X,
+    unordered_map<int, unordered_set<int> >& graph,
+    vector<unordered_set<int> >& cliques)
+{
+    if (P.empty() && X.empty()) {
+        cliques.push_back(R);
+        return;
+    }
+
+    while (!P.empty()) {
+        int v = *P.begin();
+        unordered_set<int> newR = R;
+        newR.insert(v);
+        unordered_set<int> newP;
+        for (int p : P) {
+            if (graph[v].find(p) != graph[v].end()) {
+                newP.insert(p);
+            }
+        }
+        unordered_set<int> newX;
+        for (int x : X) {
+            if (graph[v].find(x) != graph[v].end()) {
+                newX.insert(x);
+            }
+        }
+        bronKerbosch(move(newR), move(newP), move(newX),
+                     graph, cliques);
+        P.erase(v);
+        X.insert(v);
+    }
+}
+
+//gets the largest clique from the list and returns in a vector with the labels
+vector<string> Network::largest(vector<unordered_set<int> >& cliques){
+    int clqsize = 0;
+    unordered_set<int>largest;
+    for(unordered_set<int>& clq : cliques){
+        if(clq.size() > clqsize){
+            clqsize = clq.size();
+            largest = clq;
+        }
+    }
+    vector<string> result;
+    for(int i : largest)
+        result.push_back(index[i]);
+    return result;
 }
 
 
 // obtain the largest clique
 vector<string> Network::clique(){
-    int ncliques = clique_count();
-    cout << "Number of cliques: " << ncliques << endl;
-    //sort by degree
-    vector<Node> nodes;
+    adj2list();
+    vector<unordered_set<int> > allCliques;
+    //initialize the sets (literalls {} not allowed)
+    unordered_set<int> P, X, R;
     for(int i = 0; i < nnodes; i++)
-        nodes.push_back(Node(index[i], i));
-    //lambda function to sort by degree
-    sort(nodes.begin(), nodes.end(), [](Node a, Node b){ return a.deg > b.deg; });
-    for(Node n : nodes)
-        cout << n.name << " - " << n.deg << endl;
-    //remove nodes with lower degree
-    
-    return vector<string>();
+        P.insert(i);
+    bronKerbosch(move(X), move(P), move(R), adj_list, allCliques);
+    return largest(allCliques);
 }
 
 
 int main() {
     Network nx;
-    nx.load_nodes("test.txt");
-    nx.print();
+    nx.load_nodes("input.txt");
+    //nx.print();
     //obtain the larges clique
     vector<string> clq = nx.clique();
     //short alphabetically for the solution
     sort(clq.begin(), clq.end());
-    cout << "Clique: " << endl;
-    for(string node : clq)
-        cout << node << ",";
-    cout << endl;
+    println("Clique", clq);
     return 0;
 }
