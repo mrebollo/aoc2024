@@ -37,6 +37,7 @@
 #include <sstream>
 #include <vector>
 #include <set>
+#include <queue>
 #include <algorithm>
 using namespace std;
 
@@ -68,7 +69,7 @@ class Hash{
         wire* insert(string label, string op, string in1, string in2);
         wire* find(string label);
         gate strop(string op);
-        vector<wire> get_all_gates(int op);
+        vector<wire*> get_all_gates(int op);
 };
 
 // return gate type
@@ -117,11 +118,11 @@ wire* Hash::insert(string label, string op, string in1, string in2){
     return &table[pos];
 }
 
-vector<wire> Hash::get_all_gates(int op=-1){
-    vector<wire> res;
-    for(wire w : table)
-        if ((op == -1 && w.label != "") || w.op == op)
-            res.push_back(w);
+vector<wire*> Hash::get_all_gates(int op=-1){
+    vector<wire*> res;
+    for(int i = 0; i < table.size(); i++)
+        if ((op == -1 && table[i].label != "") || table[i].op == op)
+            res.push_back(&table[i]);
     return res;
 }
 
@@ -219,14 +220,34 @@ void Circuit::load_circuit(string filename){
 
 //propagates fulladders id to complete the wire's information
 void Circuit::propagate_adder_id(){
-    for(wire &w : wires.get_all_gates()){
-        if(w.label == "") continue;
-        if(w.fulladder == -1){
+    wire *w = wires.find("z45");
+    w->fulladder = 44;
+    for(wire *w : wires.get_all_gates()){
+        if(w->label == "") continue;
+        if(w->fulladder == -1 && w->op == AND){
             // wire belongs to the same fulladder from its operators,
             // except in the carry case (from previous one)
-            cout << w.in1->label << " " <<  w.op << " " << w.in2->label << " -> " << w.label << " pending" << endl;
-
+            if(w->in1->op == XOR)
+                w->fulladder = w->in1->fulladder;
+            else if(w->in2->op == XOR)
+                w->fulladder = w->in2->fulladder;
         }
+    }
+    for(wire *w : wires.get_all_gates()){
+        if(w->label == "") continue;
+        if(w->fulladder == -1 && w->op == OR){
+            // wire belongs to the same fulladder from its operators,
+            // except in the carry case (from previous one)
+            if(w->in1->op == AND and w->in1->fulladder>-1)
+                w->fulladder = w->in1->fulladder;
+            else if(w->in2->op == AND and w->in2->fulladder>-1)
+                w->fulladder = w->in2->fulladder;
+        }
+    }
+    for(wire *w : wires.get_all_gates()){
+        if(w->label == "") continue;
+        if(w->fulladder == -1)
+            cout << w->in1->label << " " << w->op << " " << w->in2->label << " -> " << w->label << " pending" << endl;
     }
 }
 
@@ -334,21 +355,21 @@ vector<string>  Circuit::check_sums(){
 // check correct carry chains: xi AND yi = auxi , auxi OR --- = ci
 vector<string>  Circuit::check_carries(){
     vector<string> errors;
-    vector<wire> orgates = wires.get_all_gates(OR);
-    for(wire &w : orgates){
-        if(!is_overflow_gate(w.in1) && !is_overflow_gate(w.in2)){
-            cout << "error in carry wire " << w.label << endl;
-            errors.push_back(w.label);
+    vector<wire*> orgates = wires.get_all_gates(OR);
+    for(wire *w : orgates){
+        if(!is_overflow_gate(w->in1) && !is_overflow_gate(w->in2)){
+            cout << "error in carry wire " << w->label << endl;
+            errors.push_back(w->label);
         }
         else{
             //both have to be AND gates. overflow is, check the other
-            if(w.in1->op != AND){
-                cout << "error in carry wire " << w.in1->label << endl;
-                errors.push_back(w.in1->label);
+            if(w->in1->op != AND){
+                cout << "error in carry wire " << w->in1->label << endl;
+                errors.push_back(w->in1->label);
             }
-            else if(w.in2->op != AND){
-                cout << "error in carry wire " << w.in2->label << endl;
-                errors.push_back(w.in2->label);
+            else if(w->in2->op != AND){
+                cout << "error in carry wire " << w->in2->label << endl;
+                errors.push_back(w->in2->label);
             }
         }
     }
@@ -359,14 +380,14 @@ vector<string>  Circuit::check_carries(){
 // check correct AND chains: xi AND yi = auxi , auxi XOR --- = zi
 vector<string>  Circuit::check_ands(){
     vector<string> errors;
-    vector<wire> andgates = wires.get_all_gates(AND);
-    for(wire &w : andgates){
+    vector<wire*> andgates = wires.get_all_gates(AND);
+    for(wire *w : andgates){
         // skip x__ and y__ wires for carry
-        if(w.in1->label[0] == 'x' || w.in1->label[0] == 'y') continue;
+        if(w->in1->label[0] == 'x' || w->in1->label[0] == 'y') continue;
         // check if the inputs are x__ XOR y__ 
-        if(!is_and_gate(w.in1) && !is_and_gate(w.in2)){
-            cout << "error in AND wire " << w.label << endl;
-            errors.push_back(w.label);
+        if(!is_and_gate(w->in1) && !is_and_gate(w->in2)){
+            cout << "error in AND wire " << w->label << endl;
+            errors.push_back(w->label);
         }
     }
     return errors;
@@ -375,12 +396,12 @@ vector<string>  Circuit::check_ands(){
 // check correct XOR chains
 vector<string> Circuit::check_xors(){
     vector<string> errors;
-    vector<wire> xorgates = wires.get_all_gates(XOR);
-    for(wire &w : xorgates){
+    vector<wire*> xorgates = wires.get_all_gates(XOR);
+    for(wire *w : xorgates){
         // skip x__ and y__ wires for carry
-         if(w.label[0] != 'z' && w.fulladder == -1){
-            cout << "error in XOR wire " << w.label << endl;
-            errors.push_back(w.label);
+         if(w->label[0] != 'z' && w->fulladder == -1){
+            cout << "error in XOR wire " << w->label << endl;
+            errors.push_back(w->label);
          }
     }
     return errors;
@@ -388,7 +409,7 @@ vector<string> Circuit::check_xors(){
 
 
 void Circuit::correct(){
-    set<string> errors;
+    /* set<string> errors;
     vector<string> err;
     err = check_sums();
     errors.insert(err.begin(), err.end());
@@ -401,8 +422,27 @@ void Circuit::correct(){
     sort(err.begin(), err.end());
     for(string e: errors)
         cout << e << ",";
-    cout << endl;
+    cout << endl; */
+    // check that all wires correspond to the same fulladder
+    // except the carry (from previous one)
+    wire *w = wires.find("z45");
+    queue<wire*> q;
+    q.push(w);
+    while(!q.empty()){
+        w = q.front();
+        q.pop();
+        if(w->op == NOOP) continue;
+        if(w->fulladder - w->in1->fulladder <= 1) 
+            q.push(w->in1);
+        else
+            cout << "error in wire " << w->in1->label << endl;
+        if(w->fulladder - w->in2->fulladder <= 1)
+            q.push(w->in2);
+        else
+            cout << "error in wire " << w->in2->label << endl;
+    }
 }
+
 
 int main() {
     Circuit c;
