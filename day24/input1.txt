@@ -1,0 +1,7 @@
+x00: 1
+y00: 1
+
+y00 AND x00 -> jfb
+x00 XOR y00 -> z00
+jjj XOR jfb -> z01
+y01 XOR x01 -> jjj
