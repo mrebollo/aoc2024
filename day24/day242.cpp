@@ -18,10 +18,10 @@
         c00 AND s01 = ccc (jbf AND jjj = pss)
         bbb OR ccc = c01 (cpp OR pss = rtc)
     and so on... until z44 (last carry bit is z45)
-        x44 XOR y44 = zzz ( - )
+        x44 XOR y44 = s44 ( - )
         x44 AND y44 = yyy (qhs)
-        zzz XOR c43 = z44 ( - AND ggg = z44)
-        c43 AND zzz = xxx (ggg AND wdq = vkm)
+        s44 XOR c43 = z44 ( - AND ggg = z44)
+        c43 AND s44 = xxx (ggg AND wdq = vkm)
         yyy OR xxx = z45 (qhs OR vkm)
 
     find error forward or backwards? 
@@ -51,6 +51,13 @@ struct wire{
     wire(): label(""), val(false), op(NOOP), in1(NULL), in2(NULL), fulladder(-1) {}
     wire(string l, bool v) : label(l), val(v), op(NOOP), fulladder(-1)  {}
     wire(string l, gate o, wire *in1, wire *in2) : label(l), op(o), in1(in1), in2(in2), fulladder(-1) {}
+    wire(wire *w) : label(w->label), val(w->val), op(w->op), in1(w->in1), in2(w->in2), fulladder(w->fulladder) {}
+};
+
+struct adder_id{
+    //true if w1 adder > w2 adder id (first in the queue)
+    bool operator()(wire* w1, wire* w2)
+    {return w1->fulladder < w2->fulladder;}
 };
 
 #define SIZE 719 // prime number for hash table
@@ -409,7 +416,7 @@ vector<string> Circuit::check_xors(){
 
 
 void Circuit::correct(){
-    /* set<string> errors;
+/*     set<string> errors;
     vector<string> err;
     err = check_sums();
     errors.insert(err.begin(), err.end());
@@ -422,25 +429,37 @@ void Circuit::correct(){
     sort(err.begin(), err.end());
     for(string e: errors)
         cout << e << ",";
-    cout << endl; */
+    cout << endl; 
     // check that all wires correspond to the same fulladder
     // except the carry (from previous one)
-    wire *w = wires.find("z45");
-    queue<wire*> q;
-    q.push(w);
+    wire *w;
+    priority_queue<wire*, vector<wire*>, adder_id> q;
+    for(int i = 45; i >= 0; i--){
+        w = wires.find("z" + to_string(i));
+        q.push(w);
+    }
     while(!q.empty()){
-        w = q.front();
+        w = q.top();
         q.pop();
         if(w->op == NOOP) continue;
-        if(w->fulladder - w->in1->fulladder <= 1) 
-            q.push(w->in1);
-        else
+        cout << w->fulladder << ": " << w->in1->label << " " << w->op << " " << w->in2->label << " -> " << w->label << endl;
+        if(w->fulladder - w->in1->fulladder > 1) {
             cout << "error in wire " << w->in1->label << endl;
-        if(w->fulladder - w->in2->fulladder <= 1)
-            q.push(w->in2);
-        else
+            continue;
+        }
+        if(w->fulladder - w->in2->fulladder > 1){
             cout << "error in wire " << w->in2->label << endl;
+            continue;
+        }
+        q.push(w->in1);
+        q.push(w->in2);
+    } */
+   string bad[] = {"gbf","nbf","nwr","pdk","shs","z05","z09","z15"};
+    for(string b: bad){
+         wire *w = wires.find(b);
+         cout << w->label << " " << w->in1->label << " " << w->in2->label << endl;
     }
+
 }
 
 
