@@ -77,6 +77,12 @@ class Hash{
         wire* find(string label);
         gate strop(string op);
         vector<wire*> get_all_gates(int op);
+        void print(){
+            string op[4] = {"NOOP", "AND", "OR", "XOR"};
+            for(wire w : table)
+                if(w.label != "")
+                    cout << w.fulladder << ": " << w.label << " <- " << w.in1->label << " " << op[w.op] << " " << w.in2->label << endl;
+        }
 };
 
 // return gate type
@@ -221,7 +227,8 @@ void Circuit::load_circuit(string filename){
         // antecedents can be unreaded yet -> not to apply
     }
     inputf.close();
-    propagate_adder_id();
+    wires.print();
+    //propagate_adder_id();
 }
 
 
