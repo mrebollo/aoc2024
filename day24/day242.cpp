@@ -159,6 +159,8 @@ class Circuit{
             wi->fulladder = atoi(wi->label.substr(1,2).c_str());
         }
         void propagate_adder_id();
+        vector<string>  check_z();
+        vector<string>  check_or();
         vector<string>  check_sums();
         vector<string>  check_carries();
         vector<string>  check_ands();
@@ -425,49 +427,87 @@ vector<string>  Circuit::check_ands(){
     return errors;
 }
 
-// check correct XOR chains
-vector<string> Circuit::check_xors(){
+
+
+// z has to be obtained as aaa XOR bbb
+vector<string>  Circuit::check_z(){
+    char label[4];
     vector<string> errors;
-    vector<wire*> xorgates = wires.get_all_gates(XOR);
-    for(wire *w : xorgates){
-        // a non-z xor wire has to have x__ or y__ as inputs
-         if(w->label[0] != 'z'){
-            if(w->in1->label[0] != 'x' && w->in1->label[0] != 'y'){
-                cout << "error in non-z XOR wire " << w->label << endl;
-                errors.push_back(w->label);
-            }
-            else{
-                // find a XOR gate with w->label as input.
-                // if not found, it's an error
-                vector<wire*> morexor = wires.get_all_gates(XOR);
-                auto wx = morexor.begin();
-                while(wx != morexor.end()){
-                    if((*wx)->in1->label == w->label || (*wx)->in2->label == w->label)                                              
-                        break;
-                    wx++;
-                }
-                if(wx == morexor.end())
-                    cout << "error in non-z XOR wire " << w->label << endl;
-            }
-         }
+    //gates z00 and z45 are special cases (half adder and last carry)
+    for(int i = 44; i > 0; i--){
+        //get the output wire
+        sprintf(label,"z%02d", i);
+        wire *w = wires.find(label);
+        if(w->op != XOR){
+            cout << "z-error in wire " << w->label << endl;
+            errors.push_back(w->label);
+        }
     }
     return errors;
 }
 
+// an OR gate has to have AND gates as inputs
+vector<string>  Circuit::check_or(){
+    char label[4];
+    vector<string> errors;
+    for(wire *w : wires.get_all_gates(OR)){
+        if(w->in1->op != AND){
+            cout << "or-error in wire " << w->in1->label << endl;
+            errors.push_back(w->in1->label);
+        }
+        if(w->in2->op != AND){
+            cout << "or-error in wire " << w->in2->label << endl;
+            errors.push_back(w->in2->label);
+        }
+    }
+    return errors;
+}
+
+// XOR gate has to have x__ or y__ as inputs
+// or the result th XOR-xy gate with an OR
+vector<string> Circuit::check_xors(){
+    vector<string> errors;
+    for(wire *w : wires.get_all_gates(XOR)){
+        // a non-z xor wire has to have x__ or y__ as inputs
+        if(w->label[0] != 'z') continue;
+        if(w->in1->op == OR){
+            if(w->in2->op != XOR || (w->in2->op == XOR && w->in2->in1->op != NOOP)){
+                cout << "error in non-z XOR wire (XOR) " << w->in2->label << endl;
+                errors.push_back(w->in2->label);
+            }
+        } 
+        else if(w->in2->op == OR){
+            if(w->in1->op != XOR || (w->in1->op == XOR && w->in1->in1->op != NOOP)){
+                cout << "error in non-z XOR wire (XOR) " << w->in1->label << endl;
+                errors.push_back(w->in1->label);
+            }
+        }
+        //no OR
+        else if(w->in1->op == XOR && w->in1->fulladder < 0){
+            cout << "error in non-z XOR wire (OR)" << w->in2->label << endl;
+            errors.push_back(w->in2->label);
+        }
+        else if(w->in2->op == XOR && w->in2->fulladder < 0){
+            cout << "error in non-z XOR wire (OR)" << w->in1->label << endl;
+            errors.push_back(w->in1->label);
+        }
+    }
+    return errors;
+}
 
 void Circuit::correct(){
-     set<string> errors;
+    set<string> errors;
     vector<string> err;
-    //trying solution in https://www.redditmedia.com/r/adventofcode/comments/1hla5ql/2024_day_24_part_2_a_guide_on_the_idea_behind_the/
-    err = check_sums();
+    err = check_z();
     errors.insert(err.begin(), err.end());
+    err = check_or();
+    errors.insert(err.begin(), err.end());
+    //only one changes pending (2 gates)
     err = check_xors();
     errors.insert(err.begin(), err.end());
-    err = check_carries();
-    errors.insert(err.begin(), err.end());
-    err = check_ands();
-    errors.insert(err.begin(), err.end());
-
+    /*err = check_ands();
+    errors.insert(err.begin(), err.end()); */
+ 
     sort(err.begin(), err.end());
     for(string e: errors)
         cout << e << ",";
@@ -496,22 +536,22 @@ void Circuit::correct(){
         }
         q.push(w->in1);
         q.push(w->in2);
-    } */
+    } 
    string bad[] = {"gbf","nbf","nwr","pdk","shs","z05","z09","z15"};
     for(string b: bad){
          wire *w = wires.find(b);
          cout << w->label << " " << w->in1->label << " " << w->in2->label << endl;
     }
-
+*/
 }
 
 
 int main() {
     Circuit c;
     c.load_circuit("input.txt");
-    c.solve();
-    c.print_output();
-    c.print_sum();
+    //c.solve();
+    //c.print_output();
+    //c.print_sum();
     c.correct();
     cout << c.get_output() << endl;
     return 0;
